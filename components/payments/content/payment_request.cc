@@ -48,17 +48,28 @@ void PaymentRequest::Init(mojom::PaymentRequestClientPtr client,
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   client_ = std::move(client);
 
-  if (!OriginSecurityChecker::IsOriginSecure(
-          delegate_->GetLastCommittedURL())) {
+  const GURL last_committed_url = delegate_->GetLastCommittedURL();
+  if (!OriginSecurityChecker::IsOriginSecure(last_committed_url)) {
     LOG(ERROR) << "Not in a secure origin";
     OnConnectionTerminated();
     return;
   }
 
-  if (OriginSecurityChecker::IsSchemeCryptographic(
-          delegate_->GetLastCommittedURL()) &&
-      !delegate_->IsSslCertificateValid()) {
+  bool allowed_origin =
+      OriginSecurityChecker::IsSchemeCryptographic(last_committed_url) ||
+      OriginSecurityChecker::IsOriginLocalhostOrFile(last_committed_url);
+  if (!allowed_origin) {
+    LOG(ERROR) << "Only localhost, file://, and cryptographic scheme origins "
+                  "allowed";
+  }
+
+  bool invalid_ssl =
+      OriginSecurityChecker::IsSchemeCryptographic(last_committed_url) &&
+      !delegate_->IsSslCertificateValid();
+  if (invalid_ssl)
     LOG(ERROR) << "SSL certificate is not valid";
+
+  if (!allowed_origin || invalid_ssl) {
     // Don't show UI. Resolve .canMakepayment() with "false". Reject .show()
     // with "NotSupportedError".
     spec_ = base::MakeUnique<PaymentRequestSpec>(
@@ -95,6 +106,14 @@ void PaymentRequest::Init(mojom::PaymentRequestClientPtr client,
 void PaymentRequest::Show() {
   if (!client_.is_bound() || !binding_.is_bound()) {
     LOG(ERROR) << "Attempted Show(), but binding(s) missing.";
+    OnConnectionTerminated();
+    return;
+  }
+
+  // A tab can display only one PaymentRequest UI at a time.
+  if (!manager_->CanShow(this)) {
+    LOG(ERROR) << "A PaymentRequest UI is already showing";
+    client_->OnError(mojom::PaymentErrorReason::USER_CANCEL);
     OnConnectionTerminated();
     return;
   }
@@ -190,6 +209,8 @@ void PaymentRequest::UserCancelled() {
   // We close all bindings and ask to be destroyed.
   client_.reset();
   binding_.Close();
+  if (observer_for_testing_)
+    observer_for_testing_->OnConnectionTerminated();
   manager_->DestroyRequest(this);
 }
 
@@ -202,6 +223,8 @@ void PaymentRequest::OnConnectionTerminated() {
   client_.reset();
   binding_.Close();
   delegate_->CloseDialog();
+  if (observer_for_testing_)
+    observer_for_testing_->OnConnectionTerminated();
   manager_->DestroyRequest(this);
 }
 

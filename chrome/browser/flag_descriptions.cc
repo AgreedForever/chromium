@@ -243,6 +243,12 @@ const char kTopChromeMdMaterial[] = "Normal";
 
 const char kTopChromeMdMaterialHybrid[] = "Touch";
 
+const char kSiteDetails[] = "Site Details";
+
+const char kSiteDetailsDescription[] =
+    "Adds UI in MD Settings to view all content settings for a specific "
+    "origin.";
+
 const char kSiteSettings[] = "Site settings with All sites and Site details";
 
 const char kSiteSettingsDescription[] =
@@ -3083,6 +3089,11 @@ const char kOmniboxDisplayTitleForCurrentUrlDescription[] =
     "the current page is provided as the first suggestion without a title. "
     "Enabling this flag causes the title to be displayed.";
 
+const char kOmniboxUIVerticalMarginName[] = "Omnibox UI Vertical Margin";
+
+const char kOmniboxUIVerticalMarginDescription[] =
+    "Changes the vertical margin in the Omnibox UI.";
+
 const char kForceEffectiveConnectionTypeName[] =
     "Override effective connection type";
 
@@ -3120,5 +3131,12 @@ const char kLocationHardReloadName[] =
 const char kLocationHardReloadDescription[] =
     "Enable an experimental change for Location.reload() to trigger a "
     "hard-reload.";
+
+const char kCaptureThumbnailOnLoadFinishedName[] =
+    "Capture page thumbnail on load finished";
+
+const char kCaptureThumbnailOnLoadFinishedDescription[] =
+    "Capture a page thumbnail (for use on the New Tab page) when the page load "
+    "finishes, in addition to other times a thumbnail may be captured.";
 
 }  // namespace flag_descriptions

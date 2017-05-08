@@ -252,6 +252,13 @@ extern const char kTopChromeMdMaterial[];
 // Top Chrome material hybrid design option (for touchscreens).
 extern const char kTopChromeMdMaterialHybrid[];
 
+// Title of the flag which enables site details in MD settings.
+extern const char kSiteDetails[];
+
+// Description of the flag which enables or disables site details in MD
+// settings.
+extern const char kSiteDetailsDescription[];
+
 // Title of the flag which enables the site settings all sites list and site
 // details.
 extern const char kSiteSettings[];
@@ -3352,6 +3359,12 @@ extern const char kOmniboxDisplayTitleForCurrentUrlName[];
 // for current URL.
 extern const char kOmniboxDisplayTitleForCurrentUrlDescription[];
 
+// Name of the Omnibox UI vertical margin flag.
+extern const char kOmniboxUIVerticalMarginName[];
+
+// Description of the Omnibox UI vertical margin flag.
+extern const char kOmniboxUIVerticalMarginDescription[];
+
 // Name of the flag that forces Network Quality Estimator (NQE) to always
 // return the specified effective connection type.
 extern const char kForceEffectiveConnectionTypeName[];
@@ -3390,6 +3403,10 @@ extern const char kLocationHardReloadName[];
 // Description of the about: flag for experimental location.reload() to trigger
 // a hard-reload.
 extern const char kLocationHardReloadDescription[];
+
+// Name and description for the capture-thumbnail-on-load-finished flag.
+extern const char kCaptureThumbnailOnLoadFinishedName[];
+extern const char kCaptureThumbnailOnLoadFinishedDescription[];
 
 }  // namespace flag_descriptions
 

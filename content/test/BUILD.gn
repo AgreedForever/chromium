@@ -494,6 +494,7 @@ static_library("layouttest_support") {
     "//content/browser:for_content_tests",
     "//content/child:for_content_tests",
     "//content/public/common",
+    "//content/public/renderer",
     "//content/renderer:for_content_tests",
     "//content/shell/test_runner:test_runner",
     "//device/bluetooth",
@@ -1072,6 +1073,7 @@ test("content_unittests") {
     "../browser/cocoa/system_hotkey_map_unittest.mm",
     "../browser/compositor/reflector_impl_unittest.cc",
     "../browser/compositor/software_browser_compositor_output_surface_unittest.cc",
+    "../browser/compositor/software_output_device_mac_unittest.mm",
     "../browser/compositor/software_output_device_ozone_unittest.cc",
     "../browser/devtools/devtools_http_handler_unittest.cc",
     "../browser/devtools/devtools_manager_unittest.cc",
@@ -1364,6 +1366,7 @@ test("content_unittests") {
     "../common/webplugininfo_unittest.cc",
     "../network/url_loader_unittest.cc",
     "../public/test/referrer_unittest.cc",
+    "../public/test/test_browser_thread_bundle_unittest.cc",
     "../renderer/android/disambiguation_popup_helper_unittest.cc",
     "../renderer/bmp_image_decoder_unittest.cc",
     "../renderer/categorized_worker_pool_unittest.cc",
@@ -1690,6 +1693,7 @@ test("content_unittests") {
       "//third_party/ocmock",
       "//ui/accelerated_widget_mac",
     ]
+    libs = [ "IOSurface.framework" ]
   }
   if (is_chromeos) {
     deps += [ "//chromeos" ]

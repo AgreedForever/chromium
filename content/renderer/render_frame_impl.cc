@@ -2487,7 +2487,7 @@ blink::WebLocalFrame* RenderFrameImpl::GetWebFrame() {
   return frame_;
 }
 
-WebPreferences& RenderFrameImpl::GetWebkitPreferences() {
+const WebPreferences& RenderFrameImpl::GetWebkitPreferences() {
   return render_view_->GetWebkitPreferences();
 }
 
@@ -4497,6 +4497,8 @@ void RenderFrameImpl::WillSendRequest(blink::WebURLRequest& request) {
           current_request_data->navigation_initiated_by_renderer());
     }
   }
+
+  extra_data->set_url_loader_factory_override(url_loader_factory_.get());
 
   request.SetExtraData(extra_data);
 
