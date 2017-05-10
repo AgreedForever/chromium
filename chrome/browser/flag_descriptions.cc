@@ -1736,13 +1736,6 @@ const char kAccountConsistencyDescription[] =
     "When enabled, the browser manages signing in and out of Google "
     "accounts.";
 
-const char kEnablePasswordSeparatedSigninFlowName[] =
-    "Enable new gaia password-separated sign in flow";
-
-const char kEnablePasswordSeparatedSigninFlowDescription[] =
-    "When enabled, signing in to the browser will use a new gaia "
-    "password-separated sign in flow.";
-
 const char kGoogleProfileInfoName[] = "Google profile name and icon";
 
 const char kGoogleProfileInfoDescription[] =
@@ -2590,6 +2583,11 @@ const char kAndroidPaymentAppsName[] = "Android payment apps";
 
 const char kAndroidPaymentAppsDescription[] =
     "Enable third party Android apps to integrate as payment apps";
+
+const char kServiceWorkerPaymentAppsName[] = "Service Worker payment apps";
+
+const char kServiceWorkerPaymentAppsDescription[] =
+    "Enable Service Worker applications to integrate as payment apps";
 
 #endif  // defined(OS_ANDROID)
 

@@ -1607,11 +1607,6 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kAccountConsistencyDescription, kOsDesktop,
      SINGLE_VALUE_TYPE(switches::kEnableAccountConsistency)},
 #endif
-    {"enable-password-separated-signin-flow",
-     flag_descriptions::kEnablePasswordSeparatedSigninFlowName,
-     flag_descriptions::kEnablePasswordSeparatedSigninFlowDescription,
-     kOsMac | kOsWin | kOsLinux,
-     FEATURE_VALUE_TYPE(switches::kUsePasswordSeparatedSigninFlow)},
 #if BUILDFLAG(ENABLE_APP_LIST)
     {"reset-app-list-install-state",
      flag_descriptions::kResetAppListInstallStateName,
@@ -2459,6 +2454,10 @@ const FeatureEntry kFeatureEntries[] = {
     {"android-payment-apps", flag_descriptions::kAndroidPaymentAppsName,
      flag_descriptions::kAndroidPaymentAppsDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(chrome::android::kAndroidPaymentApps)},
+    {"service-worker-payment-apps",
+     flag_descriptions::kServiceWorkerPaymentAppsName,
+     flag_descriptions::kServiceWorkerPaymentAppsDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(features::kServiceWorkerPaymentApps)},
 #endif  // OS_ANDROID
 #if defined(OS_CHROMEOS)
     {"disable-eol-notification", flag_descriptions::kEolNotificationName,

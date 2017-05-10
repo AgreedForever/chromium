@@ -25,6 +25,7 @@
 #include "ui/wm/core/cursor_manager.h"
 #include "ui/wm/public/activation_change_observer.h"
 
+class PrefRegistrySimple;
 class PrefService;
 
 namespace aura {
@@ -121,6 +122,7 @@ class MediaController;
 class MouseCursorEventFilter;
 class MruWindowTracker;
 class NewWindowController;
+class NightLightController;
 class OverlayEventFilter;
 class PaletteDelegate;
 class PartialMagnificationController;
@@ -157,6 +159,7 @@ class SystemTrayDelegate;
 class SystemTrayNotifier;
 class ToplevelWindowEventHandler;
 class ToastManager;
+class TrayAction;
 class TrayBluetoothHelper;
 class VirtualKeyboardController;
 class VideoActivityNotifier;
@@ -260,6 +263,9 @@ class ASH_EXPORT Shell : public SessionObserver,
   static Config GetAshConfig();
   static bool ShouldUseIMEService();
 
+  // Registers all ash related prefs to the given |registry|.
+  static void RegisterPrefs(PrefRegistrySimple* registry);
+
   // Creates a default views::NonClientFrameView for use by windows in the
   // Ash environment.
   views::NonClientFrameView* CreateDefaultNonClientFrameView(
@@ -326,6 +332,9 @@ class ASH_EXPORT Shell : public SessionObserver,
   NewWindowController* new_window_controller() {
     return new_window_controller_.get();
   }
+  NightLightController* night_light_controller() {
+    return night_light_controller_.get();
+  }
   SessionController* session_controller() { return session_controller_.get(); }
   ShelfController* shelf_controller() { return shelf_controller_.get(); }
   ShelfModel* shelf_model();
@@ -344,6 +353,7 @@ class ASH_EXPORT Shell : public SessionObserver,
   views::corewm::TooltipController* tooltip_controller() {
     return tooltip_controller_.get();
   }
+  TrayAction* tray_action() { return tray_action_.get(); }
   VpnList* vpn_list() { return vpn_list_.get(); }
   WindowCycleController* window_cycle_controller() {
     return window_cycle_controller_.get();
@@ -578,7 +588,8 @@ class ASH_EXPORT Shell : public SessionObserver,
 
   // Notifies observers that the virtual keyboard has been
   // activated/deactivated for |root_window|.
-  void NotifyVirtualKeyboardActivated(bool activated, WmWindow* root_window);
+  void NotifyVirtualKeyboardActivated(bool activated,
+                                      aura::Window* root_window);
 
   // Notifies observers that the shelf was created for |root_window|.
   // TODO(jamescook): Move to Shelf.
@@ -683,6 +694,7 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<PaletteDelegate> palette_delegate_;
   std::unique_ptr<ResizeShadowController> resize_shadow_controller_;
   std::unique_ptr<SessionController> session_controller_;
+  std::unique_ptr<NightLightController> night_light_controller_;
   std::unique_ptr<ShelfController> shelf_controller_;
   std::unique_ptr<ShelfWindowWatcher> shelf_window_watcher_;
   std::unique_ptr<ShellDelegate> shell_delegate_;
@@ -691,6 +703,7 @@ class ASH_EXPORT Shell : public SessionObserver,
   std::unique_ptr<SystemTrayDelegate> system_tray_delegate_;
   std::unique_ptr<SystemTrayNotifier> system_tray_notifier_;
   std::unique_ptr<ToastManager> toast_manager_;
+  std::unique_ptr<TrayAction> tray_action_;
   std::unique_ptr<VpnList> vpn_list_;
   std::unique_ptr<WallpaperController> wallpaper_controller_;
   std::unique_ptr<WallpaperDelegate> wallpaper_delegate_;

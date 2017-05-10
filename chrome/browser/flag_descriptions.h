@@ -1918,13 +1918,6 @@ extern const char kAccountConsistencyName[];
 // jar.
 extern const char kAccountConsistencyDescription[];
 
-// Title for the flag to enable the new gaia password-separated sign in flow.
-extern const char kEnablePasswordSeparatedSigninFlowName[];
-
-// Description for the flag to enable the new gaia password-separated sign in
-// flow.
-extern const char kEnablePasswordSeparatedSigninFlowDescription[];
-
 // Title for the flag to enable the google profile information
 extern const char kGoogleProfileInfoName[];
 
@@ -2820,6 +2813,12 @@ extern const char kAndroidPaymentAppsName[];
 
 // Description for the flag to enable third party Android payment apps
 extern const char kAndroidPaymentAppsDescription[];
+
+// Name of the flag to enable Service Worker payment apps
+extern const char kServiceWorkerPaymentAppsName[];
+
+// Description for the flag to enable Service Worker payment apps
+extern const char kServiceWorkerPaymentAppsDescription[];
 
 #endif  // defined(OS_ANDROID)
 

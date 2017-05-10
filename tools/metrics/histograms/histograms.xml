@@ -3815,6 +3815,17 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <summary>The autofill state related to a submitted form.</summary>
 </histogram>
 
+<histogram name="Autofill.HasModifiedProfile.CreditCardFormSubmission"
+    enum="Boolean">
+  <owner>csashi@google.com</owner>
+  <owner>jsaul@google.com</owner>
+  <owner>sebsg@chromium.org</owner>
+  <summary>
+    Whether user modified an address profile shortly before submitting a credit
+    card form.
+  </summary>
+</histogram>
+
 <histogram name="Autofill.IcuCollatorCreationSuccess" enum="BooleanSuccess">
   <owner>mathp@chromium.org</owner>
   <summary>
@@ -31956,9 +31967,9 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <owner>elawrence@chromium.org</owner>
   <owner>estark@chromium.org</owner>
   <summary>
-    The scheme of the URL for each main-frame navigation that goes to a
-    different page. Transitions like fragment change or history.pushState are
-    excluded.
+    The scheme of the URL for each main-frame navigation that replaces a
+    document object. This is not reported for reference fragment navigations,
+    pushState/replaceState or same page history navigation.
   </summary>
 </histogram>
 
@@ -31967,9 +31978,10 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <owner>elawrence@chromium.org</owner>
   <owner>estark@chromium.org</owner>
   <summary>
-    The scheme of the URL for each main-frame navigation that goes to a
-    different page while in incognito. Transitions like fragment change or
-    history.pushState are excluded.
+    The scheme of the URL for each main-frame navigation that replaces a
+    document object while in incognito. This is not reported for reference
+    fragment navigations, pushState/replaceState or same page history
+    navigation.
   </summary>
 </histogram>
 
@@ -49977,6 +49989,15 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <summary>
     Tracks documents opened in the PDF viewer where substitute fonts need to be
     used.
+  </summary>
+</histogram>
+
+<histogram name="PDF.LoadStatus" enum="PDFLoadStatus">
+  <owner>tommycli@chromium.org</owner>
+  <summary>
+    Tracks what happens when Chrome tries to load a PDF. This metric tracks all
+    cases, but is focused on measuring failed PDF embeds, which occur if the
+    user is on Android, or if PDF plugin is disabled.
   </summary>
 </histogram>
 
@@ -78993,6 +79014,17 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <summary>
     The length of a WebAPK session (launch/foregrounding to backgrounding) in
     milliseconds.
+  </summary>
+</histogram>
+
+<histogram name="WebApk.Update.GooglePlayUpdateResult"
+    enum="WebApkGooglePlayInstallResult">
+  <owner>hanxi@chromium.org</owner>
+  <owner>pkotwicz@chromium.org</owner>
+  <owner>yfriedman@chromium.org</owner>
+  <summary>
+    Records whether updating a WebAPK from Google Play succeeded. If not,
+    records the reason that the update failed.
   </summary>
 </histogram>
 

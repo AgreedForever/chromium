@@ -5283,6 +5283,7 @@ uploading your change for review.  These are checked by presubmit scripts.
   <int value="30" label="Important site info setting"/>
   <int value="31" label="Permission autoblocker data setting"/>
   <int value="32" label="Subresource filter setting"/>
+  <int value="33" label="Subresource filter metadata"/>
 </enum>
 
 <enum name="ContentTypeParseableResult" type="int">
@@ -7227,10 +7228,16 @@ uploading your change for review.  These are checked by presubmit scripts.
 </enum>
 
 <enum name="DircryptoMigrationEndStatus" type="int">
-  <int value="1" label="New migration failed"/>
+  <int value="1" label="New migration failed (generic failure)"/>
   <int value="2" label="New migration succeeded"/>
-  <int value="3" label="Resumed migration failed"/>
+  <int value="3" label="Resumed migration failed (generic failure)"/>
   <int value="4" label="Resumed migration succeeded"/>
+  <int value="5" label="New migration failed (low disk space)"/>
+  <int value="6" label="Resumed migration failed (low disk space)"/>
+  <int value="7" label="New migration failed (file error)"/>
+  <int value="8" label="Resumed migration failed (file error)"/>
+  <int value="9" label="New migration failed (file error EIO on open)"/>
+  <int value="10" label="Resumed migration failed (file error EIO on open)"/>
 </enum>
 
 <enum name="DircryptoMigrationStartStatus" type="int">
@@ -12182,6 +12189,7 @@ uploading your change for review.  These are checked by presubmit scripts.
   <int value="1170" label="WEBRTC_AUDIO_PRIVATE_SET_AUDIO_EXPERIMENTS"/>
   <int value="1171" label="AUTOTESTPRIVATE_GETPLAYSTORESTATE"/>
   <int value="1172" label="AUTOTESTPRIVATE_SETPLAYSTOREENABLED"/>
+  <int value="1173" label="APP_CURRENTWINDOWINTERNAL_SETACTIVATEONPOINTER"/>
 </enum>
 
 <enum name="ExtensionIconState" type="int">
@@ -18741,6 +18749,7 @@ uploading your change for review.  These are checked by presubmit scripts.
   <int value="72" label="SEARCH_GEOLOCATION_DISCLOSURE_INFOBAR_DELEGATE"/>
   <int value="73" label="AUTOMATION_INFOBAR_DELEGATE"/>
   <int value="74" label="VR_SERVICES_UPGRADE_ANDROID"/>
+  <int value="75" label="READER_MODE_INFOBAR_ANDROID"/>
 </enum>
 
 <enum name="InfoBarResponse" type="int">
@@ -20802,6 +20811,7 @@ uploading your change for review.  These are checked by presubmit scripts.
   <int value="1" label="native notifications not supported"/>
   <int value="2" label="missing required capabilities"/>
   <int value="3" label="could not connect to signals"/>
+  <int value="4" label="incompatible spec version"/>
 </enum>
 
 <enum name="LinuxSandboxStatus" type="int">
@@ -21269,6 +21279,7 @@ from previous Chrome versions.
       label="disallow-autofill-sync-credential-for-reauth"/>
   <int value="-1349532167" label="enable-wifi-credential-sync"/>
   <int value="-1346722635" label="gesture-selection"/>
+  <int value="-1344375439" label="ServiceWorkerPaymentApps:disabled"/>
   <int value="-1341092934" label="enable-accelerated-overflow-scroll"/>
   <int value="-1340055960" label="enable-streamlined-hosted-apps"/>
   <int value="-1337185440" label="enable-webvr"/>
@@ -21765,6 +21776,7 @@ from previous Chrome versions.
   <int value="625273056" label="disable-boot-animation"/>
   <int value="628302973" label="NTPSnippets:enabled"/>
   <int value="628570445" label="AndroidAutofillAccessibility:enabled"/>
+  <int value="630244477" label="ServiceWorkerPaymentApps:enabled"/>
   <int value="630947363" label="touch-events"/>
   <int value="635971109" label="PrintPdfAsImage:disabled"/>
   <int value="636425179" label="mhtml-generator-option"/>
@@ -27066,8 +27078,8 @@ from previous Chrome versions.
   <int value="3" label="Timed out"/>
   <int value="4" label="Matched whitelist"/>
   <int value="5" label="Response already cached"/>
-  <int value="6" label="Not extended reporting user"/>
-  <int value="7" label="Incognito"/>
+  <int value="6" label="DEPRECATED: Not extended reporting user"/>
+  <int value="7" label="DEPRECATED: Incognito"/>
   <int value="8" label="Request malformed"/>
   <int value="9" label="Fetch failed"/>
   <int value="10" label="Response malformed"/>
@@ -27165,6 +27177,12 @@ from previous Chrome versions.
   <int value="0" label="Loaded Document"/>
   <int value="1" label="Has Title"/>
   <int value="2" label="Has Bookmarks"/>
+</enum>
+
+<enum name="PDFLoadStatus" type="int">
+  <int value="0" label="Loaded a full-page PDF with PDFium"/>
+  <int value="1" label="Loaded an embedded PDF with PDFium"/>
+  <int value="2" label="Showed disabled plugin placeholder for embedded PDF"/>
 </enum>
 
 <enum name="PeerConnectionCounters" type="int">
@@ -33400,6 +33418,8 @@ from previous Chrome versions.
   <int value="7" label="Content setting allowed (global)"/>
   <int value="8" label="Content setting blocked (global)"/>
   <int value="9" label="Content setting wildcard update"/>
+  <int value="10" label="UI Suppressed (Smart Logic)"/>
+  <int value="11" label="Content setting blocked while UI suppressed"/>
 </enum>
 
 <enum name="SubresourceFilterActivationDecision" type="int">

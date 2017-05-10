@@ -259,7 +259,12 @@ def get_waterfall_config():
            'build75-b1--device1', 'build75-b1--device2', 'build75-b1--device3',
            'build75-b1--device4', 'build75-b1--device5', 'build75-b1--device6',
            'build75-b1--device7',
-          ]
+          ],
+       'perf_tests': [
+         ('tracing_perftests', 'build73-b1--device2'),
+         ('gpu_perftests', 'build73-b1--device2'),
+         ('cc_perftests', 'build73-b1--device2'),
+         ]
       }
     ])
 
@@ -913,6 +918,10 @@ def verify_all_tests_in_benchmark_csv(tests, benchmark_metadata):
 
   _verify_benchmark_owners(benchmark_metadata)
 
+
+UNOWNED_BENCHMARK_FILE = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'unowned_benchmarks.txt'))
+
 # Verify that all benchmarks have owners except those on the whitelist.
 def _verify_benchmark_owners(benchmark_metadata):
   unowned_benchmarks = set()
@@ -923,14 +932,15 @@ def _verify_benchmark_owners(benchmark_metadata):
 
   # Read in the list of benchmarks that do not have owners.
   # This list will eventually be empty (BUG=575762)
-  with open('unowned_benchmarks.txt') as f:
+  with open(UNOWNED_BENCHMARK_FILE) as f:
     known_unowned_benchmarks = set(f.read().splitlines())
 
   error_messages = []
   for test in unowned_benchmarks - known_unowned_benchmarks:
     error_messages.append('Benchmarks must have owners; Add owner to ' + test)
   for test in known_unowned_benchmarks - unowned_benchmarks:
-    error_messages.append('Remove ' + test + ' from unowned_benchmarks.txt')
+    error_messages.append('Remove ' + test +
+        ' from %s' % UNOWNED_BENCHMARK_FILE)
 
   assert unowned_benchmarks == known_unowned_benchmarks, (
       'Please fix the following errors:\n'+ '\n'.join(error_messages))

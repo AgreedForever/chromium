@@ -59,6 +59,10 @@
 #include "ui/base/ime/linux/text_edit_key_bindings_delegate_auralinux.h"
 #endif
 
+#if defined(USE_X11)
+#include "ui/base/x/x11_util_internal.h"  // nogncheck
+#endif
+
 namespace views {
 
 namespace {
@@ -908,11 +912,11 @@ void Textfield::GetAccessibleNodeData(ui::AXNodeData* node_data) {
                                ui::AX_SUPPORTED_ACTION_ACTIVATE);
   }
   if (read_only())
-    node_data->AddStateFlag(ui::AX_STATE_READ_ONLY);
+    node_data->AddState(ui::AX_STATE_READ_ONLY);
   else
-    node_data->AddStateFlag(ui::AX_STATE_EDITABLE);
+    node_data->AddState(ui::AX_STATE_EDITABLE);
   if (text_input_type_ == ui::TEXT_INPUT_TYPE_PASSWORD) {
-    node_data->AddStateFlag(ui::AX_STATE_PROTECTED);
+    node_data->AddState(ui::AX_STATE_PROTECTED);
     node_data->SetValue(base::string16(text().size(), '*'));
   } else {
     node_data->SetValue(text());
@@ -1077,11 +1081,11 @@ void Textfield::WriteDragDataForView(View* sender,
 
   SkBitmap bitmap;
   float raster_scale = ScaleFactorForDragFromWidget(GetWidget());
-#if defined(OS_LINUX) && !defined(OS_CHROMEOS)
-  // Desktop Linux Aura does not yet support transparency in drag images.
-  SkColor color = GetBackgroundColor();
-#else
   SkColor color = SK_ColorTRANSPARENT;
+#if defined(USE_X11)
+  // Fallback on the background color if the system doesn't support compositing.
+  if (!ui::XVisualManager::GetInstance()->ArgbVisualAvailable())
+    color = GetBackgroundColor();
 #endif
   label.Paint(
       ui::CanvasPainter(&bitmap, label.size(), raster_scale, color).context());

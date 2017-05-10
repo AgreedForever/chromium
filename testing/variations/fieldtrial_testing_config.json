@@ -862,21 +862,6 @@
             ]
         }
     ],
-    "EnableCsrssLockdown": [
-        {
-            "platforms": [
-                "win"
-            ],
-            "experiments": [
-                {
-                    "name": "Enabled",
-                    "enable_features": [
-                        "EnableCsrssLockdown"
-                    ]
-                }
-            ]
-        }
-    ],
     "EnableGoogleCachedCopyTextExperiment": [
         {
             "platforms": [
@@ -1321,6 +1306,21 @@
             "experiments": [
                 {
                     "name": "Enabled"
+                }
+            ]
+        }
+    ],
+    "LsdPermissionPrompt": [
+        {
+            "platforms": [
+                "android"
+            ],
+            "experiments": [
+                {
+                    "name": "Enabled",
+                    "enable_features": [
+                        "LsdPermissionPrompt"
+                    ]
                 }
             ]
         }
@@ -2001,6 +2001,52 @@
                     "name": "Enabled",
                     "enable_features": [
                         "PasswordMetadataFilling"
+                    ]
+                }
+            ]
+        }
+    ],
+    "PasswordProtectionLowReputationPing": [
+        {
+            "platforms": [
+                "chromeos",
+                "linux",
+                "mac",
+                "win"
+            ],
+            "experiments": [
+                {
+                    "name": "SBEROnlyNoIncognito",
+                    "params": {
+                        "extended_reporting": "true",
+                        "history_sync": "false",
+                        "incognito": "false"
+                    },
+                    "enable_features": [
+                        "LowReputationPinging"
+                    ]
+                }
+            ]
+        }
+    ],
+    "PasswordProtectionProtectedPasswordEntryPing": [
+        {
+            "platforms": [
+                "chromeos",
+                "linux",
+                "mac",
+                "win"
+            ],
+            "experiments": [
+                {
+                    "name": "SBEROnlyNoIncognito",
+                    "params": {
+                        "extended_reporting": "true",
+                        "history_sync": "false",
+                        "incognito": "false"
+                    },
+                    "enable_features": [
+                        "ProtectedPasswordEntryPinging"
                     ]
                 }
             ]
