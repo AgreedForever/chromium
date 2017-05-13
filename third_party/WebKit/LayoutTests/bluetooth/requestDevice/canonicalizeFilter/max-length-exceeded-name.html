@@ -5,10 +5,13 @@
 <script>
 'use strict';
 promise_test(() => {
-  const DEVICE_NAME = 'a'.repeat(248);
-
-  return setUpPreconnectedDevice({name: DEVICE_NAME})
-    .then(() => requestDeviceWithKeyDown({ filters: [{name: DEVICE_NAME}]}))
-    .then(device => assert_equals(device.name, DEVICE_NAME));
-}, 'A device name of 248 bytes is valid.');
+  let name_too_long = 'a'.repeat(249);
+  return assert_promise_rejects_with_message(
+    requestDeviceWithKeyDown({filters: [{name: name_too_long}]}),
+    new DOMException(
+      'Failed to execute \'requestDevice\' on \'Bluetooth\': A device ' +
+      'name can\'t be longer than 248 bytes.',
+      'TypeError'),
+    'Device name longer than 248');
+}, 'A device name longer than 248 must reject.');
 </script>
