@@ -1068,18 +1068,14 @@ void ComputedStyle::UpdatePropertySpecificDifferences(
         diff.SetTextDecorationOrColorChanged();
       } else {
         if (rare_inherited_data_.Get() != other.rare_inherited_data_.Get() &&
-            (rare_inherited_data_->TextFillColor() !=
-                 other.rare_inherited_data_->TextFillColor() ||
-             rare_inherited_data_->TextStrokeColor() !=
-                 other.rare_inherited_data_->TextStrokeColor() ||
-             rare_inherited_data_->TextEmphasisColor() !=
-                 other.rare_inherited_data_->TextEmphasisColor() ||
-             rare_inherited_data_->VisitedLinkTextFillColor() !=
-                 other.rare_inherited_data_->VisitedLinkTextFillColor() ||
-             rare_inherited_data_->VisitedLinkTextStrokeColor() !=
-                 other.rare_inherited_data_->VisitedLinkTextStrokeColor() ||
-             rare_inherited_data_->VisitedLinkTextEmphasisColor() !=
-                 other.rare_inherited_data_->VisitedLinkTextEmphasisColor() ||
+            (TextFillColor() != other.TextFillColor() ||
+             TextStrokeColor() != other.TextStrokeColor() ||
+             TextEmphasisColor() != other.TextEmphasisColor() ||
+             VisitedLinkTextFillColor() != other.VisitedLinkTextFillColor() ||
+             VisitedLinkTextStrokeColor() !=
+                 other.VisitedLinkTextStrokeColor() ||
+             VisitedLinkTextEmphasisColor() !=
+                 other.VisitedLinkTextEmphasisColor() ||
              rare_inherited_data_->text_emphasis_fill_ !=
                  other.rare_inherited_data_->text_emphasis_fill_ ||
              rare_inherited_data_->text_underline_position_ !=
@@ -1088,10 +1084,8 @@ void ComputedStyle::UpdatePropertySpecificDifferences(
                  other.rare_inherited_data_->text_decoration_skip_ ||
              rare_inherited_data_->applied_text_decorations_ !=
                  other.rare_inherited_data_->applied_text_decorations_ ||
-             rare_inherited_data_->CaretColor() !=
-                 other.rare_inherited_data_->CaretColor() ||
-             rare_inherited_data_->VisitedLinkCaretColor() !=
-                 other.rare_inherited_data_->VisitedLinkCaretColor())) {
+             CaretColor() != CaretColor() ||
+             VisitedLinkCaretColor() != other.VisitedLinkCaretColor())) {
           diff.SetTextDecorationOrColorChanged();
         }
       }
@@ -1732,18 +1726,18 @@ FontStretch ComputedStyle::GetFontStretch() const {
 
 TextDecoration ComputedStyle::TextDecorationsInEffect() const {
   if (HasSimpleUnderlineInternal())
-    return kTextDecorationUnderline;
+    return TextDecoration::kUnderline;
   if (!rare_inherited_data_->applied_text_decorations_)
-    return kTextDecorationNone;
+    return TextDecoration::kNone;
 
-  int decorations = 0;
+  TextDecoration decorations = TextDecoration::kNone;
 
   const Vector<AppliedTextDecoration>& applied = AppliedTextDecorations();
 
   for (size_t i = 0; i < applied.size(); ++i)
     decorations |= applied[i].Lines();
 
-  return static_cast<TextDecoration>(decorations);
+  return decorations;
 }
 
 const Vector<AppliedTextDecoration>& ComputedStyle::AppliedTextDecorations()
@@ -1752,7 +1746,7 @@ const Vector<AppliedTextDecoration>& ComputedStyle::AppliedTextDecorations()
     DEFINE_STATIC_LOCAL(
         Vector<AppliedTextDecoration>, underline,
         (1, AppliedTextDecoration(
-                kTextDecorationUnderline, kTextDecorationStyleSolid,
+                TextDecoration::kUnderline, kTextDecorationStyleSolid,
                 VisitedDependentColor(CSSPropertyTextDecorationColor))));
     // Since we only have one of these in memory, just update the color before
     // returning.
@@ -2035,7 +2029,7 @@ void ComputedStyle::OverrideTextDecorationColors(Color override_color) {
 void ComputedStyle::ApplyTextDecorations(
     const Color& parent_text_decoration_color,
     bool override_existing_colors) {
-  if (GetTextDecoration() == kTextDecorationNone &&
+  if (GetTextDecoration() == TextDecoration::kNone &&
       !HasSimpleUnderlineInternal() &&
       !rare_inherited_data_->applied_text_decorations_)
     return;
@@ -2045,24 +2039,24 @@ void ComputedStyle::ApplyTextDecorations(
   Color current_text_decoration_color =
       VisitedDependentColor(CSSPropertyTextDecorationColor);
   if (HasSimpleUnderlineInternal() &&
-      (GetTextDecoration() != kTextDecorationNone ||
+      (GetTextDecoration() != TextDecoration::kNone ||
        current_text_decoration_color != parent_text_decoration_color)) {
     SetHasSimpleUnderlineInternal(false);
     AddAppliedTextDecoration(AppliedTextDecoration(
-        kTextDecorationUnderline, kTextDecorationStyleSolid,
+        TextDecoration::kUnderline, kTextDecorationStyleSolid,
         parent_text_decoration_color));
   }
   if (override_existing_colors &&
       rare_inherited_data_->applied_text_decorations_)
     OverrideTextDecorationColors(current_text_decoration_color);
-  if (GetTextDecoration() == kTextDecorationNone)
+  if (GetTextDecoration() == TextDecoration::kNone)
     return;
   DCHECK(!HasSimpleUnderlineInternal());
   // To save memory, we don't use AppliedTextDecoration objects in the common
   // case of a single simple underline of currentColor.
   TextDecoration decoration_lines = GetTextDecoration();
   TextDecorationStyle decoration_style = GetTextDecorationStyle();
-  bool is_simple_underline = decoration_lines == kTextDecorationUnderline &&
+  bool is_simple_underline = decoration_lines == TextDecoration::kUnderline &&
                              decoration_style == kTextDecorationStyleSolid &&
                              TextDecorationColor().IsCurrentColor();
   if (is_simple_underline && !rare_inherited_data_->applied_text_decorations_) {
@@ -2227,7 +2221,7 @@ Color ComputedStyle::VisitedDependentColor(int color_property) const {
                unvisited_color.Alpha());
 }
 
-const BorderValue ComputedStyle::BorderBefore() const {
+BorderValue ComputedStyle::BorderBefore() const {
   switch (GetWritingMode()) {
     case WritingMode::kHorizontalTb:
       return BorderTop();
@@ -2240,7 +2234,7 @@ const BorderValue ComputedStyle::BorderBefore() const {
   return BorderTop();
 }
 
-const BorderValue ComputedStyle::BorderAfter() const {
+BorderValue ComputedStyle::BorderAfter() const {
   switch (GetWritingMode()) {
     case WritingMode::kHorizontalTb:
       return BorderBottom();
@@ -2253,13 +2247,13 @@ const BorderValue ComputedStyle::BorderAfter() const {
   return BorderBottom();
 }
 
-const BorderValue ComputedStyle::BorderStart() const {
+BorderValue ComputedStyle::BorderStart() const {
   if (IsHorizontalWritingMode())
     return IsLeftToRightDirection() ? BorderLeft() : BorderRight();
   return IsLeftToRightDirection() ? BorderTop() : BorderBottom();
 }
 
-const BorderValue ComputedStyle::BorderEnd() const {
+BorderValue ComputedStyle::BorderEnd() const {
   if (IsHorizontalWritingMode())
     return IsLeftToRightDirection() ? BorderRight() : BorderLeft();
   return IsLeftToRightDirection() ? BorderBottom() : BorderTop();

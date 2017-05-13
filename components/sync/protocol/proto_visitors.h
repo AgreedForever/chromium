@@ -472,6 +472,15 @@ VISIT_PROTO_FIELDS(const sync_pb::FaviconTrackingSpecifics& proto) {
   VISIT(is_bookmarked);
 }
 
+VISIT_PROTO_FIELDS(const sync_pb::FieldTrialEvent::FieldTrial& proto) {
+  VISIT(name_id);
+  VISIT(group_id);
+}
+
+VISIT_PROTO_FIELDS(const sync_pb::FieldTrialEvent& proto) {
+  VISIT_REP(field_trials);
+}
+
 VISIT_PROTO_FIELDS(const sync_pb::GcmChannelFlags& proto) {
   VISIT(enabled);
 }
@@ -850,6 +859,8 @@ VISIT_PROTO_FIELDS(const sync_pb::UniquePosition& proto) {
 VISIT_PROTO_FIELDS(const sync_pb::UserEventSpecifics& proto) {
   VISIT(event_time_usec);
   VISIT(navigation_id);
+  VISIT(session_id);
+  VISIT(field_trial_event);
 }
 
 VISIT_PROTO_FIELDS(const sync_pb::WalletMaskedCreditCard& proto) {

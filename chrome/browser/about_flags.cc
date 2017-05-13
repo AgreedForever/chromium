@@ -83,6 +83,7 @@
 #include "device/vr/features/features.h"
 #include "extensions/features/features.h"
 #include "gin/public/gin_features.h"
+#include "google_apis/drive/drive_switches.h"
 #include "gpu/config/gpu_switches.h"
 #include "media/audio/audio_features.h"
 #include "media/base/media_switches.h"
@@ -1855,7 +1856,7 @@ const FeatureEntry kFeatureEntries[] = {
     {"enable-top-document-isolation",
      flag_descriptions::kTopDocumentIsolationName,
      flag_descriptions::kTopDocumentIsolationDescription, kOsAll,
-     SINGLE_VALUE_TYPE(switches::kTopDocumentIsolation)},
+     FEATURE_VALUE_TYPE(features::kTopDocumentIsolation)},
     {"enable-use-zoom-for-dsf", flag_descriptions::kEnableUseZoomForDsfName,
      flag_descriptions::kEnableUseZoomForDsfDescription, kOsAll,
      MULTI_VALUE_TYPE(kEnableUseZoomForDSFChoices)},
@@ -2254,6 +2255,10 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kEnableNtpSnippetsVisibilityName,
      flag_descriptions::kEnableNtpSnippetsVisibilityDescription, kOsAndroid,
      FEATURE_VALUE_TYPE(ntp_snippets::kIncreasedVisibility)},
+    {"enable-contextual-suggestions-carousel",
+     flag_descriptions::kContextualSuggestionsCarouselName,
+     flag_descriptions::kContextualSuggestionsCarouselDescription, kOsAndroid,
+     FEATURE_VALUE_TYPE(chrome::android::kContextualSuggestionsCarousel)},
     {"enable-content-suggestions-new-favicon-server",
      flag_descriptions::kEnableContentSuggestionsNewFaviconServerName,
      flag_descriptions::kEnableContentSuggestionsNewFaviconServerDescription,
@@ -2658,6 +2663,11 @@ const FeatureEntry kFeatureEntries[] = {
      flag_descriptions::kTouchscreenCalibrationDescription, kOsCrOS,
      SINGLE_VALUE_TYPE(chromeos::switches::kEnableTouchCalibrationSetting)},
 #endif // defined(OS_CHROMEOS)
+#if defined(OS_CHROMEOS)
+    {"team-drives", flag_descriptions::kTeamDrivesName,
+     flag_descriptions::kTeamDrivesDescription, kOsCrOS,
+     SINGLE_VALUE_TYPE(google_apis::kEnableTeamDrives)},
+#endif  // OS_CHROMEOS
 
 #if defined(OS_WIN)
     {"gdi-text-printing", flag_descriptions::kGdiTextPrinting,

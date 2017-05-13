@@ -1482,14 +1482,24 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
     SET_VAR(rare_non_inherited_data_, page_size_type_, t);
   }
 
+  // sticky subtrees
+  bool SubtreeIsSticky() const {
+    return rare_inherited_data_->subtree_is_sticky_;
+  }
+  void SetSubtreeIsSticky(bool b) {
+    SET_VAR(rare_inherited_data_, subtree_is_sticky_, b);
+  }
+
   // Text decoration properties.
   // text-decoration-line
-  static TextDecoration InitialTextDecoration() { return kTextDecorationNone; }
+  static TextDecoration InitialTextDecoration() {
+    return TextDecoration::kNone;
+  }
   TextDecoration GetTextDecoration() const {
     return static_cast<TextDecoration>(visual_data_->text_decoration_);
   }
   void SetTextDecoration(TextDecoration v) {
-    SET_VAR(visual_data_, text_decoration_, v);
+    SET_VAR(visual_data_, text_decoration_, static_cast<unsigned>(v));
   }
 
   // text-decoration-color
@@ -1889,9 +1899,10 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
   }
 
   // -webkit-text-emphasis-color (aka -epub-text-emphasis-color)
-  void SetTextEmphasisColor(const StyleColor& c) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, TextEmphasisColor,
-                        SetTextEmphasisColor, c);
+  void SetTextEmphasisColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, text_emphasis_color_, color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_, text_emphasis_color_is_current_color_,
+            color.IsCurrentColor());
   }
 
   // -webkit-text-emphasis-position
@@ -1943,24 +1954,27 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
   }
 
   // -webkit-text-fill-color
-  void SetTextFillColor(const StyleColor& c) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, TextFillColor, SetTextFillColor,
-                        c);
+  void SetTextFillColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, text_fill_color_, color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_, text_fill_color_is_current_color_,
+            color.IsCurrentColor());
   }
 
   // -webkit-text-security
-  static ETextSecurity InitialTextSecurity() { return TSNONE; }
+  static ETextSecurity InitialTextSecurity() { return ETextSecurity::kNone; }
   ETextSecurity TextSecurity() const {
     return static_cast<ETextSecurity>(rare_inherited_data_->text_security_);
   }
   void SetTextSecurity(ETextSecurity a_text_security) {
-    SET_VAR(rare_inherited_data_, text_security_, a_text_security);
+    SET_VAR(rare_inherited_data_, text_security_,
+            static_cast<unsigned>(a_text_security));
   }
 
   // -webkit-text-stroke-color
-  void SetTextStrokeColor(const StyleColor& c) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, TextStrokeColor,
-                        SetTextStrokeColor, c);
+  void SetTextStrokeColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, text_stroke_color_, color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_, text_stroke_color_is_current_color_,
+            color.IsCurrentColor());
   }
 
   // -webkit-text-stroke-width
@@ -2000,8 +2014,11 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
   }
 
   // caret-color
-  void SetCaretColor(const StyleAutoColor& c) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, CaretColor, SetCaretColor, c);
+  void SetCaretColor(const StyleAutoColor& color) {
+    SET_VAR(rare_inherited_data_, caret_color_, color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_, caret_color_is_current_color_,
+            color.IsCurrentColor());
+    SET_VAR(rare_inherited_data_, caret_color_is_auto_, color.IsAutoColor());
   }
 
   // Font properties.
@@ -2857,19 +2874,19 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
 
   void SetBorderImageSlicesFill(bool);
   const BorderData& Border() const { return surround_data_->border_; }
-  const BorderValue BorderLeft() const {
+  BorderValue BorderLeft() const {
     return BorderValue(surround_data_->border_.Left(), BorderLeftColor(),
                        BorderLeftWidth());
   }
-  const BorderValue BorderRight() const {
+  BorderValue BorderRight() const {
     return BorderValue(surround_data_->border_.Right(), BorderRightColor(),
                        BorderRightWidth());
   }
-  const BorderValue BorderTop() const {
+  BorderValue BorderTop() const {
     return BorderValue(surround_data_->border_.Top(), BorderTopColor(),
                        BorderTopWidth());
   }
-  const BorderValue BorderBottom() const {
+  BorderValue BorderBottom() const {
     return BorderValue(surround_data_->border_.Bottom(), BorderBottomColor(),
                        BorderBottomWidth());
   }
@@ -2879,10 +2896,10 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
            BorderWidthEquals(BorderRightWidth(), o.BorderRightWidth()) &&
            BorderWidthEquals(BorderBottomWidth(), o.BorderBottomWidth());
   }
-  const BorderValue BorderBefore() const;
-  const BorderValue BorderAfter() const;
-  const BorderValue BorderStart() const;
-  const BorderValue BorderEnd() const;
+  BorderValue BorderBefore() const;
+  BorderValue BorderAfter() const;
+  BorderValue BorderStart() const;
+  BorderValue BorderEnd() const;
   float BorderAfterWidth() const;
   float BorderBeforeWidth() const;
   float BorderEndWidth() const;
@@ -3495,21 +3512,34 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
   void SetVisitedLinkTextDecorationColor(const StyleColor& v) {
     SET_VAR(rare_non_inherited_data_, visited_link_text_decoration_color_, v);
   }
-  void SetVisitedLinkTextEmphasisColor(const StyleColor& v) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, VisitedLinkTextEmphasisColor,
-                        SetVisitedLinkTextEmphasisColor, v);
+  void SetVisitedLinkTextEmphasisColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, visited_link_text_emphasis_color_,
+            color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_,
+            visited_link_text_emphasis_color_is_current_color_,
+            color.IsCurrentColor());
   }
-  void SetVisitedLinkTextFillColor(const StyleColor& v) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, VisitedLinkTextFillColor,
-                        SetVisitedLinkTextFillColor, v);
+  void SetVisitedLinkTextFillColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, visited_link_text_fill_color_,
+            color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_,
+            visited_link_text_fill_color_is_current_color_,
+            color.IsCurrentColor());
   }
-  void SetVisitedLinkTextStrokeColor(const StyleColor& v) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, VisitedLinkTextStrokeColor,
-                        SetVisitedLinkTextStrokeColor, v);
+  void SetVisitedLinkTextStrokeColor(const StyleColor& color) {
+    SET_VAR(rare_inherited_data_, visited_link_text_stroke_color_,
+            color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_,
+            visited_link_text_stroke_color_is_current_color_,
+            color.IsCurrentColor());
   }
-  void SetVisitedLinkCaretColor(const StyleAutoColor& v) {
-    SET_VAR_WITH_SETTER(rare_inherited_data_, VisitedLinkCaretColor,
-                        SetVisitedLinkCaretColor, v);
+  void SetVisitedLinkCaretColor(const StyleAutoColor& color) {
+    SET_VAR(rare_inherited_data_, visited_link_caret_color_,
+            color.Resolve(Color()));
+    SET_VAR(rare_inherited_data_, visited_link_caret_color_is_current_color_,
+            color.IsCurrentColor());
+    SET_VAR(rare_inherited_data_, visited_link_caret_color_is_auto_,
+            color.IsAutoColor());
   }
 
   static bool IsDisplayBlockContainer(EDisplay display) {
@@ -3578,7 +3608,11 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
     return background_data_->background_color_;
   }
   StyleAutoColor CaretColor() const {
-    return rare_inherited_data_->CaretColor();
+    if (rare_inherited_data_->caret_color_is_current_color_)
+      return StyleAutoColor::CurrentColor();
+    if (rare_inherited_data_->caret_color_is_auto_)
+      return StyleAutoColor::AutoColor();
+    return StyleAutoColor(rare_inherited_data_->caret_color_);
   }
   Color GetColor() const;
   StyleColor ColumnRuleColor() const {
@@ -3588,16 +3622,26 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
     return rare_non_inherited_data_->outline_.GetColor();
   }
   StyleColor TextEmphasisColor() const {
-    return rare_inherited_data_->TextEmphasisColor();
+    return rare_inherited_data_->text_emphasis_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(rare_inherited_data_->text_emphasis_color_);
   }
   StyleColor TextFillColor() const {
-    return rare_inherited_data_->TextFillColor();
+    return rare_inherited_data_->text_fill_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(rare_inherited_data_->text_fill_color_);
   }
   StyleColor TextStrokeColor() const {
-    return rare_inherited_data_->TextStrokeColor();
+    return rare_inherited_data_->text_stroke_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(rare_inherited_data_->text_stroke_color_);
   }
   StyleAutoColor VisitedLinkCaretColor() const {
-    return rare_inherited_data_->VisitedLinkCaretColor();
+    if (rare_inherited_data_->visited_link_caret_color_is_current_color_)
+      return StyleAutoColor::CurrentColor();
+    if (rare_inherited_data_->visited_link_caret_color_is_auto_)
+      return StyleAutoColor::AutoColor();
+    return StyleAutoColor(rare_inherited_data_->visited_link_caret_color_);
   }
   Color VisitedLinkColor() const;
   StyleColor VisitedLinkBackgroundColor() const {
@@ -3629,13 +3673,24 @@ class CORE_EXPORT ComputedStyle : public ComputedStyleBase,
     return rare_non_inherited_data_->visited_link_text_decoration_color_;
   }
   StyleColor VisitedLinkTextEmphasisColor() const {
-    return rare_inherited_data_->VisitedLinkTextEmphasisColor();
+    return rare_inherited_data_
+                   ->visited_link_text_emphasis_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(
+                     rare_inherited_data_->visited_link_text_emphasis_color_);
   }
   StyleColor VisitedLinkTextFillColor() const {
-    return rare_inherited_data_->VisitedLinkTextFillColor();
+    return rare_inherited_data_->visited_link_text_fill_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(
+                     rare_inherited_data_->visited_link_text_fill_color_);
   }
   StyleColor VisitedLinkTextStrokeColor() const {
-    return rare_inherited_data_->VisitedLinkTextStrokeColor();
+    return rare_inherited_data_
+                   ->visited_link_text_stroke_color_is_current_color_
+               ? StyleColor::CurrentColor()
+               : StyleColor(
+                     rare_inherited_data_->visited_link_text_stroke_color_);
   }
 
   StyleColor DecorationColorIncludingFallback(bool visited_link) const;

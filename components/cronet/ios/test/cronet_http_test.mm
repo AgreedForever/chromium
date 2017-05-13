@@ -37,11 +37,16 @@
 // Error the request this delegate is attached to failed with, if any.
 @property(retain, atomic) NSError* error;
 
+// Contains total amount of received data.
+@property(readonly) long totalBytesReceived;
+
 @end
 
 @implementation TestDelegate
+
 @synthesize semaphore = _semaphore;
 @synthesize error = _error;
+@synthesize totalBytesReceived = _totalBytesReceived;
 
 NSMutableArray<NSData*>* _responseData;
 
@@ -63,6 +68,7 @@ NSMutableArray<NSData*>* _responseData;
   [_responseData dealloc];
   _responseData = nil;
   _error = nil;
+  _totalBytesReceived = 0;
 }
 
 - (NSString*)responseBody {
@@ -110,6 +116,7 @@ NSMutableArray<NSData*>* _responseData;
 - (void)URLSession:(NSURLSession*)session
           dataTask:(NSURLSessionDataTask*)dataTask
     didReceiveData:(NSData*)data {
+  _totalBytesReceived += [data length];
   if (_responseData == nil) {
     _responseData = [[NSMutableArray alloc] init];
   }
@@ -181,13 +188,32 @@ class HttpTest : public ::testing::Test {
   base::scoped_nsobject<TestDelegate> delegate_;
 };
 
-TEST_F(HttpTest, CreateFile) {
-  bool ssl_file_created = [[NSFileManager defaultManager]
-      fileExistsAtPath:[Cronet getNetLogPathForFile:@"SSLKEYLOGFILE"]];
+TEST_F(HttpTest, CreateSslKeyLogFile) {
+  // Shutdown Cronet so that it can be restarted with specific configuration
+  // (SSL key log file specified in experimental options) for this one test.
+  // This is necessary because SslKeyLogFile can only be set once, before any
+  // SSL Client Sockets are created.
 
-  [[NSFileManager defaultManager]
-      removeItemAtPath:[Cronet getNetLogPathForFile:@"SSLKEYLOGFILE"]
-                 error:nil];
+  [Cronet shutdownForTesting];
+
+  NSString* ssl_key_log_file = [Cronet getNetLogPathForFile:@"SSLKEYLOGFILE"];
+
+  // Ensure that the keylog file doesn't exist.
+  [[NSFileManager defaultManager] removeItemAtPath:ssl_key_log_file error:nil];
+
+  [Cronet setExperimentalOptions:
+              [NSString stringWithFormat:@"{\"ssl_key_log_file\":\"%@\"}",
+                                         ssl_key_log_file]];
+
+  StartCronet(grpc_support::GetQuicTestServerPort());
+
+  bool ssl_file_created =
+      [[NSFileManager defaultManager] fileExistsAtPath:ssl_key_log_file];
+
+  [[NSFileManager defaultManager] removeItemAtPath:ssl_key_log_file error:nil];
+
+  [Cronet shutdownForTesting];
+  [Cronet setExperimentalOptions:@""];
 
   EXPECT_TRUE(ssl_file_created);
 }
@@ -232,6 +258,7 @@ TEST_F(HttpTest, NSURLSessionReceivesBigHttpDataLoop) {
       elapsed_max = elapsed;
     EXPECT_TRUE(block_used);
     EXPECT_EQ(nil, [delegate_ error]);
+    EXPECT_EQ(size, [delegate_ totalBytesReceived]);
   }
   // Release the response buffer.
   TestServer::ReleaseBigDataURL();

@@ -226,6 +226,26 @@
             ]
         }
     ],
+    "AutofillUkmLogging": [
+        {
+            "platforms": [
+                "android",
+                "chromeos",
+                "ios",
+                "linux",
+                "mac",
+                "win"
+            ],
+            "experiments": [
+                {
+                    "name": "Enabled",
+                    "enable_features": [
+                        "AutofillUkmLogging"
+                    ]
+                }
+            ]
+        }
+    ],
     "AutomaticTabDiscarding": [
         {
             "platforms": [
@@ -1115,7 +1135,7 @@
                 {
                     "name": "Enabled",
                     "params": {
-                        "engagement_threshold_for_flash": "16"
+                        "engagement_threshold_for_flash": "32"
                     },
                     "enable_features": [
                         "PreferHtmlOverPlugins"
@@ -1757,7 +1777,7 @@
             ],
             "experiments": [
                 {
-                    "name": "PrerenderDisabled",
+                    "name": "PrerenderDisabled_R2",
                     "params": {
                         "instant_mode": "simple_load",
                         "mode": "simple_load",

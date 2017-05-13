@@ -227,8 +227,6 @@ public class ContentViewCore
     // Size of the viewport in physical pixels as set from onSizeChanged.
     private int mViewportWidthPix;
     private int mViewportHeightPix;
-    private int mPhysicalBackingWidthPix;
-    private int mPhysicalBackingHeightPix;
     private int mTopControlsHeightPix;
     private int mBottomControlsHeightPix;
     private boolean mTopControlsShrinkBlinkSize;
@@ -713,22 +711,6 @@ public class ContentViewCore
     }
 
     /**
-     * @return Width of underlying physical surface.
-     */
-    @CalledByNative
-    private int getPhysicalBackingWidthPix() {
-        return mPhysicalBackingWidthPix;
-    }
-
-    /**
-     * @return Height of underlying physical surface.
-     */
-    @CalledByNative
-    private int getPhysicalBackingHeightPix() {
-        return mPhysicalBackingHeightPix;
-    }
-
-    /**
      * @return The amount that the viewport size given to Blink is shrunk by the URL-bar..
      */
     @CalledByNative
@@ -1137,21 +1119,6 @@ public class ContentViewCore
         }
 
         updateAfterSizeChanged();
-    }
-
-    /**
-     * Called when the underlying surface the compositor draws to changes size.
-     * This may be larger than the viewport size.
-     */
-    public void onPhysicalBackingSizeChanged(int wPix, int hPix) {
-        if (mPhysicalBackingWidthPix == wPix && mPhysicalBackingHeightPix == hPix) return;
-
-        mPhysicalBackingWidthPix = wPix;
-        mPhysicalBackingHeightPix = hPix;
-
-        if (mNativeContentViewCore != 0) {
-            nativeWasResized(mNativeContentViewCore);
-        }
     }
 
     @CalledByNative
@@ -1729,8 +1696,10 @@ public class ContentViewCore
     }
 
     @CalledByNative
-    private void showPastePopup(int x, int y, boolean canSelectAll, boolean canEditRichly) {
-        mSelectionPopupController.createAndShowPastePopup(x, y, canSelectAll, canEditRichly);
+    private void showPastePopup(
+            int left, int top, int right, int bottom, boolean canSelectAll, boolean canEditRichly) {
+        mSelectionPopupController.createAndShowPastePopup(
+                left, top, right, bottom, canSelectAll, canEditRichly);
     }
 
     private void destroyPastePopup() {

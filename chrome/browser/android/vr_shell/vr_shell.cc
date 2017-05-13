@@ -11,6 +11,7 @@
 
 #include "base/android/jni_string.h"
 #include "base/memory/ptr_util.h"
+#include "base/message_loop/message_loop.h"
 #include "base/metrics/histogram_macros.h"
 #include "base/threading/platform_thread.h"
 #include "base/threading/thread.h"
@@ -28,8 +29,11 @@
 #include "chrome/browser/android/vr_shell/vr_input_manager.h"
 #include "chrome/browser/android/vr_shell/vr_shell_delegate.h"
 #include "chrome/browser/android/vr_shell/vr_shell_gl.h"
+#include "chrome/browser/android/vr_shell/vr_tab_helper.h"
 #include "chrome/browser/android/vr_shell/vr_usage_monitor.h"
 #include "chrome/browser/android/vr_shell/vr_web_contents_observer.h"
+#include "chrome/browser/media/webrtc/media_capture_devices_dispatcher.h"
+#include "chrome/browser/media/webrtc/media_stream_capture_indicator.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/render_view_host.h"
@@ -62,9 +66,20 @@ namespace vr_shell {
 namespace {
 vr_shell::VrShell* g_instance;
 
+constexpr base::TimeDelta poll_media_access_interval_ =
+    base::TimeDelta::FromSecondsD(0.01);
+
 void SetIsInVR(content::WebContents* contents, bool is_in_vr) {
-  if (contents && contents->GetRenderWidgetHostView())
+  if (contents && contents->GetRenderWidgetHostView()) {
+    // TODO(asimjour) Contents should not be aware of VR mode. Instead, we
+    // should add a flag for disabling specific UI such as the keyboard (see
+    // VrTabHelper for details).
     contents->GetRenderWidgetHostView()->SetIsInVR(is_in_vr);
+
+    VrTabHelper* vr_tab_helper = VrTabHelper::FromWebContents(contents);
+    DCHECK(vr_tab_helper);
+    vr_tab_helper->SetIsInVr(is_in_vr);
+  }
 }
 
 void LoadControllerModelTask(
@@ -179,6 +194,7 @@ bool RegisterVrShell(JNIEnv* env) {
 
 VrShell::~VrShell() {
   DVLOG(1) << __FUNCTION__ << "=" << this;
+  poll_capturing_media_task_.Cancel();
   if (gamepad_source_active_) {
     device::GamepadDataFetcherManager::GetInstance()->RemoveSourceFactory(
         device::GAMEPAD_SOURCE_GVR);
@@ -405,6 +421,18 @@ void VrShell::GvrDelegateReady() {
   delegate_provider_->SetPresentingDelegate(this, gvr_api_);
 }
 
+void VrShell::OnPhysicalBackingSizeChanged(
+    JNIEnv* env,
+    const JavaParamRef<jobject>& obj,
+    const JavaParamRef<jobject>& jweb_contents,
+    jint width,
+    jint height) {
+  content::WebContents* web_contents =
+      content::WebContents::FromJavaWebContents(jweb_contents);
+  gfx::Size size(width, height);
+  web_contents->GetNativeView()->OnPhysicalBackingSizeChanged(size);
+}
+
 void VrShell::ContentPhysicalBoundsChanged(JNIEnv* env,
                                            const JavaParamRef<jobject>& object,
                                            jint width,
@@ -503,9 +531,44 @@ void VrShell::OnVRVsyncProviderRequest(
 
 void VrShell::UpdateVSyncInterval(int64_t timebase_nanos,
                                   double interval_seconds) {
+  PollMediaAccessFlag();
   PostToGlThreadWhenReady(base::Bind(&VrShellGl::UpdateVSyncInterval,
                                      gl_thread_->GetVrShellGl(), timebase_nanos,
                                      interval_seconds));
+}
+
+void VrShell::PollMediaAccessFlag() {
+  poll_capturing_media_task_.Cancel();
+
+  poll_capturing_media_task_.Reset(
+      base::Bind(&VrShell::PollMediaAccessFlag, base::Unretained(this)));
+  main_thread_task_runner_->PostDelayedTask(
+      FROM_HERE, poll_capturing_media_task_.callback(),
+      poll_media_access_interval_);
+
+  scoped_refptr<MediaStreamCaptureIndicator> indicator =
+      MediaCaptureDevicesDispatcher::GetInstance()
+          ->GetMediaStreamCaptureIndicator();
+  bool is_capturing_audio = indicator->IsCapturingAudio(web_contents_);
+  if (is_capturing_audio != is_capturing_audio_)
+    PostToGlThreadWhenReady(base::Bind(&VrShellGl::SetAudioCapturingWarning,
+                                       gl_thread_->GetVrShellGl(),
+                                       is_capturing_audio));
+  is_capturing_audio_ = is_capturing_audio;
+
+  bool is_capturing_video = indicator->IsCapturingVideo(web_contents_);
+  if (is_capturing_video != is_capturing_video_)
+    PostToGlThreadWhenReady(base::Bind(&VrShellGl::SetVideoCapturingWarning,
+                                       gl_thread_->GetVrShellGl(),
+                                       is_capturing_video));
+  is_capturing_video_ = is_capturing_video;
+
+  bool is_capturing_screen = indicator->IsBeingMirrored(web_contents_);
+  if (is_capturing_screen != is_capturing_screen_)
+    PostToGlThreadWhenReady(base::Bind(&VrShellGl::SetScreenCapturingWarning,
+                                       gl_thread_->GetVrShellGl(),
+                                       is_capturing_screen));
+  is_capturing_screen_ = is_capturing_screen;
 }
 
 void VrShell::SetContentCssSize(float width, float height, float dpr) {

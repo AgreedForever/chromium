@@ -37,6 +37,7 @@ import org.chromium.base.VisibleForTesting;
 import org.chromium.base.annotations.CalledByNative;
 import org.chromium.base.annotations.JNINamespace;
 import org.chromium.base.library_loader.LibraryLoader;
+import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.ChromeActivity;
 import org.chromium.chrome.browser.ChromeFeatureList;
@@ -98,6 +99,7 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
 
     private static VrShellDelegate sInstance;
     private static VrBroadcastReceiver sVrBroadcastReceiver;
+    private static boolean sRegisteredDaydreamHook = false;
 
     private ChromeActivity mActivity;
 
@@ -126,7 +128,7 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
     private boolean mListeningForWebVrActivate;
     private boolean mListeningForWebVrActivateBeforePause;
 
-    private static class VrBroadcastReceiver extends BroadcastReceiver {
+    private static final class VrBroadcastReceiver extends BroadcastReceiver {
         private final WeakReference<ChromeActivity> mTargetActivity;
 
         public VrBroadcastReceiver(ChromeActivity activity) {
@@ -277,7 +279,7 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
         // Daydream is not supported on pre-N devices.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return;
         if (sInstance != null) return; // Will be handled in onPause.
-        if (!activitySupportsVrBrowsing(activity)) return;
+        if (!sRegisteredDaydreamHook) return;
         VrClassesWrapper wrapper = getVrClassesWrapper();
         if (wrapper == null) return;
         VrDaydreamApi api = wrapper.createVrDaydreamApi(activity);
@@ -340,7 +342,13 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
     }
 
     private static PendingIntent getEnterVrPendingIntent(ChromeActivity activity) {
+        if (sVrBroadcastReceiver != null) sVrBroadcastReceiver.unregister();
+        IntentFilter filter = new IntentFilter(VR_ENTRY_RESULT_ACTION);
+        sVrBroadcastReceiver = new VrBroadcastReceiver(activity);
+        activity.registerReceiver(sVrBroadcastReceiver, filter);
+
         Intent vrIntent = new Intent(VR_ENTRY_RESULT_ACTION);
+        vrIntent.setPackage(activity.getPackageName());
         return PendingIntent.getBroadcast(activity, 0, vrIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
     }
@@ -350,18 +358,18 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
      */
     private static void registerDaydreamIntent(
             final VrDaydreamApi daydreamApi, final ChromeActivity activity) {
-        if (sVrBroadcastReceiver != null) sVrBroadcastReceiver.unregister();
+        if (sRegisteredDaydreamHook) return;
         if (!daydreamApi.registerDaydreamIntent(getEnterVrPendingIntent(activity))) return;
-        IntentFilter filter = new IntentFilter(VR_ENTRY_RESULT_ACTION);
-        sVrBroadcastReceiver = new VrBroadcastReceiver(activity);
-        activity.registerReceiver(sVrBroadcastReceiver, filter);
+        sRegisteredDaydreamHook = true;
     }
 
     /**
      * Unregisters the Intent which registered by this context if any.
      */
     private static void unregisterDaydreamIntent(VrDaydreamApi daydreamApi) {
+        if (!sRegisteredDaydreamHook) return;
         daydreamApi.unregisterDaydreamIntent();
+        sRegisteredDaydreamHook = false;
     }
 
     /**
@@ -469,6 +477,9 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
         // presentation. Go into WebVR mode tentatively. If the page doesn't request presentation
         // in the vrdisplayactivate handler we will exit presentation later.
         enterVr(mListeningForWebVrActivateBeforePause && !mRequestedWebVr);
+
+        // The user has successfully completed a DON flow.
+        RecordUserAction.record("VR.DON");
 
         return true;
     }
@@ -670,20 +681,18 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
 
     private void pauseVr() {
         mPaused = true;
+        unregisterDaydreamIntent(mVrDaydreamApi);
         if (mVrSupportLevel == VR_NOT_AVAILABLE) return;
 
-        if (mVrSupportLevel == VR_DAYDREAM) {
-            unregisterDaydreamIntent(mVrDaydreamApi);
+        // When the active web page has a vrdisplayactivate event handler,
+        // mListeningForWebVrActivate should be set to true, which means a vrdisplayactive event
+        // should be fired once DON flow finished. However, DON flow will pause our activity,
+        // which makes the active page becomes invisible. And the event fires before the active
+        // page becomes visible again after DON finished. So here we remember the value of
+        // mListeningForWebVrActivity before pause and use this value to decide if
+        // vrdisplayactivate event should be dispatched in enterVRFromIntent.
+        mListeningForWebVrActivateBeforePause = mListeningForWebVrActivate;
 
-            // When the active web page has a vrdisplayactivate event handler,
-            // mListeningForWebVrActivate should be set to true, which means a vrdisplayactive event
-            // should be fired once DON flow finished. However, DON flow will pause our activity,
-            // which makes the active page becomes invisible. And the event fires before the active
-            // page becomes visible again after DON finished. So here we remember the value of
-            // mListeningForWebVrActivity before pause and use this value to decide if
-            // vrdisplayactivate event should be dispatched in enterVRFromIntent.
-            mListeningForWebVrActivateBeforePause = mListeningForWebVrActivate;
-        }
         if (mNativeVrShellDelegate != 0) nativeOnPause(mNativeVrShellDelegate);
 
         // TODO(mthiesse): When VR Shell lives in its own activity, and integrates with Daydream
@@ -755,6 +764,10 @@ public class VrShellDelegate implements ApplicationStatus.ActivityStateListener,
             mVrClassesWrapper.setVrModeEnabled(mActivity, false);
             mLastVrExit = SystemClock.uptimeMillis();
         }
+
+        // The user has exited VR.
+        RecordUserAction.record("VR.DOFF");
+
         restoreWindowMode();
         mVrShell.pause();
         removeVrViews();

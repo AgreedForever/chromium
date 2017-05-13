@@ -176,7 +176,6 @@ class CC_EXPORT LayerImpl {
   // non-opaque color.  Tries to return background_color(), if possible.
   SkColor SafeOpaqueBackgroundColor() const;
 
-  bool FilterIsAnimating() const;
   bool HasPotentiallyRunningFilterAnimation() const;
 
   void SetMasksToBounds(bool masks_to_bounds);
@@ -336,7 +335,6 @@ class CC_EXPORT LayerImpl {
     return touch_event_handler_region_;
   }
 
-  bool TransformIsAnimating() const;
   bool HasPotentiallyRunningTransformAnimation() const;
 
   bool HasFilterAnimationThatInflatesBounds() const;

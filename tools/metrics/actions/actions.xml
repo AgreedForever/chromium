@@ -16005,6 +16005,15 @@ should be able to be added at any place in this file.
   </description>
 </action>
 
+<action name="Suggestions.ScrolledAfterOpen">
+  <owner>dgn@chromium.org</owner>
+  <owner>finkm@chromium.org</owner>
+  <description>
+    Android: Recorded the first time the user scrolls after opening the
+    suggestions UI.
+  </description>
+</action>
+
 <action name="Suggestions.Site.RemovalUndone">
   <owner>finkm@chromium.org</owner>
   <owner>dgn@chromium.org</owner>
@@ -16619,6 +16628,30 @@ should be able to be added at any place in this file.
     prefs::kBrowserAddPersonEnabled are cleared because they no longer exist in
     the Material Design settings page.
   </description>
+</action>
+
+<action name="VR.DOFF">
+  <owner>billorr@chromium.org</owner>
+  <description>
+    The user has successfully completed the VR DOFF flow.
+  </description>
+</action>
+
+<action name="VR.DON">
+  <owner>billorr@chromium.org</owner>
+  <description>
+    The user has successfully completed the VR DON flow.
+  </description>
+</action>
+
+<action name="VR.WebVR.StopPresenting">
+  <owner>billorr@chromium.org</owner>
+  <description>The user (or site) has stopped WebVR presentation.</description>
+</action>
+
+<action name="VR.WebVR.requestPresent">
+  <owner>billorr@chromium.org</owner>
+  <description>The user has initiated WebVR presentation.</description>
 </action>
 
 <action name="VideoPlayer.CastVideoError">

@@ -15,12 +15,7 @@
 #include "components/feature_engagement_tracker/internal/model.h"
 #include "components/feature_engagement_tracker/internal/proto/event.pb.h"
 
-namespace base {
-struct Feature;
-}
-
 namespace feature_engagement_tracker {
-class Configuration;
 class StorageValidator;
 class Store;
 
@@ -28,17 +23,13 @@ class Store;
 class ModelImpl : public Model {
  public:
   ModelImpl(std::unique_ptr<Store> store,
-            std::unique_ptr<Configuration> configuration,
             std::unique_ptr<StorageValidator> storage_validator);
   ~ModelImpl() override;
 
   // Model implementation.
-  void Initialize(const OnModelInitializationFinished& callback) override;
+  void Initialize(const OnModelInitializationFinished& callback,
+                  uint32_t current_day) override;
   bool IsReady() const override;
-  const FeatureConfig& GetFeatureConfig(
-      const base::Feature& feature) const override;
-  void SetIsCurrentlyShowing(bool is_showing) override;
-  bool IsCurrentlyShowing() const override;
   const Event* GetEvent(const std::string& event_name) const override;
   void IncrementEvent(const std::string& event_name,
                       uint32_t current_day) override;
@@ -46,6 +37,7 @@ class ModelImpl : public Model {
  private:
   // Callback for loading the underlying store.
   void OnStoreLoaded(const OnModelInitializationFinished& callback,
+                     uint32_t current_day,
                      bool success,
                      std::unique_ptr<std::vector<Event>> events);
 
@@ -56,9 +48,6 @@ class ModelImpl : public Model {
   // The underlying store for all events.
   std::unique_ptr<Store> store_;
 
-  // The current configuration for all features.
-  std::unique_ptr<Configuration> configuration_;
-
   // A utility for checking whether new events should be stored and for whether
   // old events should be kept.
   std::unique_ptr<StorageValidator> storage_validator_;
@@ -68,9 +57,6 @@ class ModelImpl : public Model {
 
   // Whether the model has been fully initialized.
   bool ready_;
-
-  // Whether the model is currently showing an in-product help.
-  bool currently_showing_;
 
   base::WeakPtrFactory<ModelImpl> weak_factory_;
 

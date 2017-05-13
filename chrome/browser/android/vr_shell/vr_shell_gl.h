@@ -108,6 +108,10 @@ class VrShellGl : public device::mojom::VRVSyncProvider {
   void SetSubmitClient(
       device::mojom::VRSubmitFrameClientPtrInfo submit_client_info);
 
+  void SetAudioCapturingWarning(bool is_capturing);
+  void SetVideoCapturingWarning(bool is_capturing);
+  void SetScreenCapturingWarning(bool is_capturing);
+
  private:
   void GvrInit(gvr_context* gvr_api);
   void InitializeRenderer();
@@ -120,11 +124,14 @@ class VrShellGl : public device::mojom::VRVSyncProvider {
                   int viewport_offset,
                   bool draw_cursor);
   void DrawElements(const vr::Mat4f& view_proj_matrix,
-                    const std::vector<const UiElement*>& elements);
+                    const std::vector<const UiElement*>& elements,
+                    bool draw_cursor);
+  void DrawElement(const vr::Mat4f& view_proj_matrix, const UiElement& element);
   std::vector<const UiElement*> GetElementsInDrawOrder(
       const vr::Mat4f& view_matrix,
       const std::vector<const UiElement*>& elements);
-  void DrawCursor(const vr::Mat4f& render_matrix);
+  void DrawReticle(const vr::Mat4f& view_proj_matrix);
+  void DrawLaser(const vr::Mat4f& view_proj_matrix);
   void DrawController(const vr::Mat4f& view_proj_matrix);
   bool ShouldDrawWebVr();
   void DrawWebVr();
@@ -218,7 +225,7 @@ class VrShellGl : public device::mojom::VRVSyncProvider {
 
   // TODO(mthiesse): We need to handle elements being removed, and update this
   // state appropriately.
-  UiElement* cursor_render_target_ = nullptr;
+  UiElement* reticle_render_target_ = nullptr;
   UiElement* hover_target_ = nullptr;
   // TODO(mthiesse): We shouldn't have a fling target. Elements should fling
   // independently and we should only cancel flings on the relevant element

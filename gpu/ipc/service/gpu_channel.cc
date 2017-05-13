@@ -118,11 +118,11 @@ GpuChannelMessageQueue::GpuChannelMessageQueue(
   io_thread_checker_.DetachFromThread();
 }
 
-GpuChannelMessageQueue::~GpuChannelMessageQueue() {
-  DCHECK(channel_messages_.empty());
-}
+GpuChannelMessageQueue::~GpuChannelMessageQueue() = default;
 
 void GpuChannelMessageQueue::Destroy() {
+  // There's no need to reply to sync messages here because the channel is being
+  // destroyed and the client Sends will fail.
   sync_point_order_data_->Destroy();
 
   if (preempting_flag_)

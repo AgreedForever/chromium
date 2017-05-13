@@ -42,12 +42,28 @@
   _proxy.contentOffset = contentOffset;
 }
 
+- (UIEdgeInsets)scrollIndicatorInsets {
+  return _proxy.scrollIndicatorInsets;
+}
+
+- (void)setScrollIndicatorInsets:(UIEdgeInsets)scrollIndicatorInsets {
+  _proxy.scrollIndicatorInsets = scrollIndicatorInsets;
+}
+
 - (CGRect)bounds {
   return {_proxy.contentOffset, _proxy.frame.size};
 }
 
+- (BOOL)isDecelerating {
+  return _proxy.decelerating;
+}
+
 - (BOOL)isDragging {
   return _proxy.dragging;
+}
+
+- (UIPanGestureRecognizer*)panGestureRecognizer {
+  return _proxy.panGestureRecognizer;
 }
 
 - (UIEdgeInsets)contentInset {
@@ -58,8 +74,16 @@
   _proxy.contentInset = contentInset;
 }
 
+- (void)setContentOffset:(CGPoint)contentOffset animated:(BOOL)animated {
+  [_proxy setContentOffset:contentOffset animated:animated];
+}
+
 - (void)addGestureRecognizer:(UIGestureRecognizer*)gestureRecognizer {
   [_proxy addGestureRecognizer:gestureRecognizer];
+}
+
+- (void)removeGestureRecognizer:(UIGestureRecognizer*)gestureRecognizer {
+  [_proxy removeGestureRecognizer:gestureRecognizer];
 }
 
 #pragma mark - NSObject
@@ -74,7 +98,7 @@
 
 - (void)webViewScrollViewWillBeginDragging:
     (CRWWebViewScrollViewProxy*)webViewScrollViewProxy {
-  SEL selector = @selector(webViewScrollViewWillBeginDragging:);
+  SEL selector = @selector(scrollViewWillBeginDragging:);
   if ([_delegate respondsToSelector:selector]) {
     [_delegate scrollViewWillBeginDragging:self];
   }
@@ -83,8 +107,8 @@
             (CRWWebViewScrollViewProxy*)webViewScrollViewProxy
                             withVelocity:(CGPoint)velocity
                      targetContentOffset:(inout CGPoint*)targetContentOffset {
-  SEL selector = @selector
-      (webViewScrollViewWillEndDragging:withVelocity:targetContentOffset:);
+  SEL selector =
+      @selector(scrollViewWillEndDragging:withVelocity:targetContentOffset:);
   if ([_delegate respondsToSelector:selector]) {
     [_delegate scrollViewWillEndDragging:self
                             withVelocity:velocity
@@ -102,9 +126,17 @@
 
 - (void)webViewScrollViewDidEndDecelerating:
     (CRWWebViewScrollViewProxy*)webViewScrollViewProxy {
-  SEL selector = @selector(webViewScrollViewDidEndDecelerating:);
+  SEL selector = @selector(scrollViewDidEndDecelerating:);
   if ([_delegate respondsToSelector:selector]) {
     [_delegate scrollViewDidEndDecelerating:self];
+  }
+}
+
+- (void)webViewScrollViewWillBeginZooming:
+    (CRWWebViewScrollViewProxy*)webViewScrollViewProxy {
+  SEL selector = @selector(scrollViewWillBeginZooming:);
+  if ([_delegate respondsToSelector:selector]) {
+    [_delegate scrollViewWillBeginZooming:self];
   }
 }
 

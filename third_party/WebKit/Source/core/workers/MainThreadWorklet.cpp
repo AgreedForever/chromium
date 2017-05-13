@@ -7,73 +7,46 @@
 #include "bindings/core/v8/ScriptPromiseResolver.h"
 #include "bindings/core/v8/ScriptSourceCode.h"
 #include "bindings/core/v8/V8BindingForCore.h"
-#include "core/dom/DOMException.h"
-#include "core/dom/Document.h"
-#include "core/dom/ExceptionCode.h"
-#include "core/dom/TaskRunnerHelper.h"
 #include "core/frame/LocalFrame.h"
 #include "core/workers/WorkletGlobalScopeProxy.h"
 #include "core/workers/WorkletPendingTasks.h"
 #include "platform/wtf/WTF.h"
+#include "public/platform/WebURLRequest.h"
 
 namespace blink {
 
-MainThreadWorklet::MainThreadWorklet(LocalFrame* frame) : Worklet(frame) {}
+namespace {
 
-// Implementation of the first half of the "addModule(moduleURL, options)"
-// algorithm:
-// https://drafts.css-houdini.org/worklets/#dom-worklet-addmodule
-ScriptPromise MainThreadWorklet::addModule(ScriptState* script_state,
-                                           const String& module_url) {
-  DCHECK(IsMainThread());
-  if (!GetExecutionContext()) {
-    return ScriptPromise::RejectWithDOMException(
-        script_state, DOMException::Create(kInvalidStateError,
-                                           "This frame is already detached"));
-  }
-
-  // Step 1: "Let promise be a new promise."
-  ScriptPromiseResolver* resolver = ScriptPromiseResolver::Create(script_state);
-  ScriptPromise promise = resolver->Promise();
-
-  // Step 2: "Let worklet be the current Worklet."
-  // |this| is the current Worklet.
-
-  // Step 3: "Let moduleURLRecord be the result of parsing the moduleURL
-  // argument relative to the relevant settings object of this."
-  KURL module_url_record = GetExecutionContext()->CompleteURL(module_url);
-
-  // Step 4: "If moduleURLRecord is failure, then reject promise with a
-  // "SyntaxError" DOMException and return promise."
-  if (!module_url_record.IsValid()) {
-    resolver->Reject(DOMException::Create(
-        kSyntaxError, "'" + module_url + "' is not a valid URL."));
-    return promise;
-  }
-
-  // Step 5: "Return promise, and then continue running this algorithm in
-  // parallel."
-  // |kUnspecedLoading| is used here because this is a part of script module
-  // loading.
-  TaskRunnerHelper::Get(TaskType::kUnspecedLoading, script_state)
-      ->PostTask(BLINK_FROM_HERE,
-                 WTF::Bind(&MainThreadWorklet::FetchAndInvokeScript,
-                           WrapPersistent(this), module_url_record,
-                           WrapPersistent(resolver)));
-  return promise;
+WebURLRequest::FetchCredentialsMode ParseCredentialsOption(
+    const String& credentials_option) {
+  if (credentials_option == "omit")
+    return WebURLRequest::kFetchCredentialsModeOmit;
+  if (credentials_option == "same-origin")
+    return WebURLRequest::kFetchCredentialsModeSameOrigin;
+  if (credentials_option == "include")
+    return WebURLRequest::kFetchCredentialsModeInclude;
+  NOTREACHED();
+  return WebURLRequest::kFetchCredentialsModeOmit;
 }
+
+}  // namespace
+
+MainThreadWorklet::MainThreadWorklet(LocalFrame* frame) : Worklet(frame) {}
 
 // Implementation of the second half of the "addModule(moduleURL, options)"
 // algorithm:
 // https://drafts.css-houdini.org/worklets/#dom-worklet-addmodule
 void MainThreadWorklet::FetchAndInvokeScript(const KURL& module_url_record,
+                                             const WorkletOptions& options,
                                              ScriptPromiseResolver* resolver) {
   DCHECK(IsMainThread());
   if (!GetExecutionContext())
     return;
 
   // Step 6: "Let credentialOptions be the credentials member of options."
-  // TODO(nhiroki): Implement credentialOptions (https://crbug.com/710837).
+  // TODO(nhiroki): Add tests for credentialOptions (https://crbug.com/710837).
+  WebURLRequest::FetchCredentialsMode credentials_mode =
+      ParseCredentialsOption(options.credentials());
 
   // Step 7: "Let outsideSettings be the relevant settings object of this."
   // TODO(nhiroki): outsideSettings will be used for posting a task to the
@@ -109,16 +82,14 @@ void MainThreadWorklet::FetchAndInvokeScript(const KURL& module_url_record,
   // invoke a worklet script given workletGlobalScope, moduleURLRecord,
   // moduleResponsesMap, credentialOptions, outsideSettings, pendingTaskStruct,
   // and promise."
-  // TODO(nhiroki): Pass the remaining parameters (e.g., credentialOptions).
   // TODO(nhiroki): Queue a task instead of executing this here.
-  GetWorkletGlobalScopeProxy()->FetchAndInvokeScript(module_url_record,
-                                                     pending_tasks);
+  GetWorkletGlobalScopeProxy()->FetchAndInvokeScript(
+      module_url_record, credentials_mode, pending_tasks);
 }
 
 void MainThreadWorklet::ContextDestroyed(ExecutionContext* execution_context) {
   DCHECK(IsMainThread());
   GetWorkletGlobalScopeProxy()->TerminateWorkletGlobalScope();
-  Worklet::ContextDestroyed(execution_context);
 }
 
 DEFINE_TRACE(MainThreadWorklet) {
