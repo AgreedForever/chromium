@@ -10,6 +10,7 @@
 
 #include "base/files/file_path.h"
 #include "base/macros.h"
+#include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/test/scoped_task_scheduler.h"
@@ -65,7 +66,7 @@ class NetworkCertMigratorTest : public testing::Test {
 
     CertLoader::Initialize();
     CertLoader* cert_loader_ = CertLoader::Get();
-    cert_loader_->StartWithNSSDB(test_nsscertdb_.get());
+    cert_loader_->SetUserNSSDB(test_nsscertdb_.get());
   }
 
   void TearDown() override {

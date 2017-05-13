@@ -222,10 +222,6 @@ ContentViewCoreImpl::ContentViewCoreImpl(
       device_orientation_(0),
       accessibility_enabled_(false) {
   GetViewAndroid()->SetLayer(cc::Layer::Create());
-  gfx::Size physical_size(
-      Java_ContentViewCore_getPhysicalBackingWidthPix(env, obj),
-      Java_ContentViewCore_getPhysicalBackingHeightPix(env, obj));
-  GetViewAndroid()->GetLayer()->SetBounds(physical_size);
 
   // Currently, the only use case we have for overriding a user agent involves
   // spoofing a desktop Linux user agent for "Request desktop site".
@@ -601,9 +597,12 @@ bool ContentViewCoreImpl::ShowPastePopup(const ContextMenuParams& params) {
   const bool can_edit_richly =
       !!(params.edit_flags & blink::WebContextMenuData::kCanEditRichly);
 
-  Java_ContentViewCore_showPastePopup(env, obj, params.selection_start.x(),
-                                      params.selection_start.y(),
-                                      can_select_all, can_edit_richly);
+  int handle_height = GetRenderWidgetHostViewAndroid()->GetTouchHandleHeight();
+  Java_ContentViewCore_showPastePopup(
+      env, obj, params.selection_rect.x(), params.selection_rect.y(),
+      params.selection_rect.right(),
+      params.selection_rect.bottom() + handle_height, can_select_all,
+      can_edit_richly);
   return true;
 }
 
@@ -659,16 +658,6 @@ gfx::Size ContentViewCoreImpl::GetViewSize() const {
   if (DoBrowserControlsShrinkBlinkSize())
     size.Enlarge(0, -GetTopControlsHeightDip() - GetBottomControlsHeightDip());
   return size;
-}
-
-gfx::Size ContentViewCoreImpl::GetPhysicalBackingSize() const {
-  JNIEnv* env = AttachCurrentThread();
-  ScopedJavaLocalRef<jobject> j_obj = java_ref_.get(env);
-  if (j_obj.is_null())
-    return gfx::Size();
-  return gfx::Size(
-      Java_ContentViewCore_getPhysicalBackingWidthPix(env, j_obj),
-      Java_ContentViewCore_getPhysicalBackingHeightPix(env, j_obj));
 }
 
 gfx::Size ContentViewCoreImpl::GetViewportSizePix() const {
@@ -1035,11 +1024,6 @@ void ContentViewCoreImpl::RemoveJavascriptInterface(
 
 void ContentViewCoreImpl::WasResized(JNIEnv* env,
                                      const JavaParamRef<jobject>& obj) {
-  gfx::Size physical_size(
-      Java_ContentViewCore_getPhysicalBackingWidthPix(env, obj),
-      Java_ContentViewCore_getPhysicalBackingHeightPix(env, obj));
-  GetViewAndroid()->GetLayer()->SetBounds(physical_size);
-
   SendScreenRectsAndResizeWidget();
 }
 

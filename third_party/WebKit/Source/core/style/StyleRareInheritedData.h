@@ -76,84 +76,6 @@ class CORE_EXPORT StyleRareInheritedData
 
   Persistent<StyleImage> list_style_image_;
 
-  StyleColor TextStrokeColor() const {
-    return text_stroke_color_is_current_color_ ? StyleColor::CurrentColor()
-                                               : StyleColor(text_stroke_color_);
-  }
-  StyleColor TextFillColor() const {
-    return text_fill_color_is_current_color_ ? StyleColor::CurrentColor()
-                                             : StyleColor(text_fill_color_);
-  }
-  StyleColor TextEmphasisColor() const {
-    return text_emphasis_color_is_current_color_
-               ? StyleColor::CurrentColor()
-               : StyleColor(text_emphasis_color_);
-  }
-  StyleAutoColor CaretColor() const {
-    if (caret_color_is_current_color_)
-      return StyleAutoColor::CurrentColor();
-    if (caret_color_is_auto_)
-      return StyleAutoColor::AutoColor();
-    return StyleAutoColor(caret_color_);
-  }
-  StyleColor VisitedLinkTextStrokeColor() const {
-    return visited_link_text_stroke_color_is_current_color_
-               ? StyleColor::CurrentColor()
-               : StyleColor(visited_link_text_stroke_color_);
-  }
-  StyleColor VisitedLinkTextFillColor() const {
-    return visited_link_text_fill_color_is_current_color_
-               ? StyleColor::CurrentColor()
-               : StyleColor(visited_link_text_fill_color_);
-  }
-  StyleColor VisitedLinkTextEmphasisColor() const {
-    return visited_link_text_emphasis_color_is_current_color_
-               ? StyleColor::CurrentColor()
-               : StyleColor(visited_link_text_emphasis_color_);
-  }
-  StyleAutoColor VisitedLinkCaretColor() const {
-    if (visited_link_caret_color_is_current_color_)
-      return StyleAutoColor::CurrentColor();
-    if (visited_link_caret_color_is_auto_)
-      return StyleAutoColor::AutoColor();
-    return StyleAutoColor(visited_link_caret_color_);
-  }
-
-  void SetTextStrokeColor(const StyleColor& color) {
-    text_stroke_color_ = color.Resolve(Color());
-    text_stroke_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetTextFillColor(const StyleColor& color) {
-    text_fill_color_ = color.Resolve(Color());
-    text_fill_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetTextEmphasisColor(const StyleColor& color) {
-    text_emphasis_color_ = color.Resolve(Color());
-    text_emphasis_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetCaretColor(const StyleAutoColor& color) {
-    caret_color_ = color.Resolve(Color());
-    caret_color_is_current_color_ = color.IsCurrentColor();
-    caret_color_is_auto_ = color.IsAutoColor();
-  }
-  void SetVisitedLinkTextStrokeColor(const StyleColor& color) {
-    visited_link_text_stroke_color_ = color.Resolve(Color());
-    visited_link_text_stroke_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetVisitedLinkTextFillColor(const StyleColor& color) {
-    visited_link_text_fill_color_ = color.Resolve(Color());
-    visited_link_text_fill_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetVisitedLinkTextEmphasisColor(const StyleColor& color) {
-    visited_link_text_emphasis_color_ = color.Resolve(Color());
-    visited_link_text_emphasis_color_is_current_color_ = color.IsCurrentColor();
-  }
-  void SetVisitedLinkCaretColor(const StyleAutoColor& color) {
-    visited_link_caret_color_ = color.Resolve(Color());
-    visited_link_caret_color_is_current_color_ = color.IsCurrentColor();
-    visited_link_caret_color_is_auto_ = color.IsAutoColor();
-  }
-
   Color text_stroke_color_;
   float text_stroke_width_;
   Color text_fill_color_;
@@ -220,6 +142,10 @@ class CORE_EXPORT StyleRareInheritedData
   unsigned self_or_ancestor_has_dir_auto_attribute_ : 1;
 
   unsigned respect_image_orientation_ : 1;
+
+  // Though position: sticky is not itself an inherited property, being a
+  // descendent of a sticky element changes some document lifecycle logic.
+  unsigned subtree_is_sticky_ : 1;
 
   AtomicString hyphenation_string_;
   short hyphenation_limit_before_;

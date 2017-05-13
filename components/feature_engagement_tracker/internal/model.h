@@ -11,13 +11,8 @@
 #include "base/callback.h"
 #include "base/macros.h"
 
-namespace base {
-struct Feature;
-}  // namespace base
-
 namespace feature_engagement_tracker {
 class Event;
-struct FeatureConfig;
 
 // A Model provides all necessary runtime state.
 class Model {
@@ -30,21 +25,12 @@ class Model {
 
   // Initialize the model, including all underlying sub systems. When all
   // required operations have been finished, a callback is posted.
-  virtual void Initialize(const OnModelInitializationFinished& callback) = 0;
+  virtual void Initialize(const OnModelInitializationFinished& callback,
+                          uint32_t current_day) = 0;
 
   // Returns whether the model is ready, i.e. whether it has been successfully
   // initialized.
   virtual bool IsReady() const = 0;
-
-  // Returns the FeatureConfig for the given |feature|.
-  virtual const FeatureConfig& GetFeatureConfig(
-      const base::Feature& feature) const = 0;
-
-  // Update the state of whether any in-product help is currently showing.
-  virtual void SetIsCurrentlyShowing(bool is_showing) = 0;
-
-  // Returns whether any in-product help is currently showing.
-  virtual bool IsCurrentlyShowing() const = 0;
 
   // Retrieves the Event object for the event with the given name. If the event
   // is not found, a nullptr will be returned. Calling this before the

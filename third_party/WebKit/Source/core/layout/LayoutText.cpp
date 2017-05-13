@@ -208,7 +208,8 @@ void LayoutText::StyleDidChange(StyleDifference diff,
   const ComputedStyle& new_style = StyleRef();
   ETextTransform old_transform =
       old_style ? old_style->TextTransform() : ETextTransform::kNone;
-  ETextSecurity old_security = old_style ? old_style->TextSecurity() : TSNONE;
+  ETextSecurity old_security =
+      old_style ? old_style->TextSecurity() : ETextSecurity::kNone;
   if (old_transform != new_style.TextTransform() ||
       old_security != new_style.TextSecurity())
     TransformText();
@@ -1673,15 +1674,15 @@ void LayoutText::SetTextInternal(PassRefPtr<StringImpl> text) {
     // We use the same characters here as for list markers.
     // See the listMarkerText function in LayoutListMarker.cpp.
     switch (Style()->TextSecurity()) {
-      case TSNONE:
+      case ETextSecurity::kNone:
         break;
-      case TSCIRCLE:
+      case ETextSecurity::kCircle:
         SecureText(kWhiteBulletCharacter);
         break;
-      case TSDISC:
+      case ETextSecurity::kDisc:
         SecureText(kBulletCharacter);
         break;
-      case TSSQUARE:
+      case ETextSecurity::kSquare:
         SecureText(kBlackSquareCharacter);
     }
   }
@@ -1718,8 +1719,7 @@ void LayoutText::SecureText(UChar mask) {
 void LayoutText::SetText(PassRefPtr<StringImpl> text, bool force) {
   DCHECK(text);
 
-  bool equal = Equal(text_.Impl(), text.Get());
-  if (equal && !force)
+  if (!force && Equal(text_.Impl(), text.Get()))
     return;
 
   SetTextInternal(std::move(text));
@@ -1732,14 +1732,8 @@ void LayoutText::SetText(PassRefPtr<StringImpl> text, bool force) {
         LayoutInvalidationReason::kTextChanged);
   known_to_have_no_overflow_and_no_fallback_fonts_ = false;
 
-  // Don't bother updating the AX tree if there's no change. Otherwise, when
-  // typing in password fields, we would announce each "dot" twice: once when a
-  // character is typed, and second when that character is hidden.
-  if (!equal) {
-    AXObjectCache* cache = GetDocument().ExistingAXObjectCache();
-    if (cache)
-      cache->TextChanged(this);
-  }
+  if (AXObjectCache* cache = GetDocument().ExistingAXObjectCache())
+    cache->TextChanged(this);
 
   TextAutosizer* text_autosizer = GetDocument().GetTextAutosizer();
   if (text_autosizer)

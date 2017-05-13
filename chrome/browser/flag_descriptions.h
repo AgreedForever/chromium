@@ -54,6 +54,12 @@ extern const char kEnableMaterialDesignExtensionsDescription[];
 // Name for the flag to enable the material design feedback UI.
 extern const char kEnableMaterialDesignFeedbackName[];
 
+// Name for the flag to enable contextual suggestions carousel.
+extern const char kContextualSuggestionsCarouselName[];
+
+// Description for the flag to enable contextual suggestions carousel.
+extern const char kContextualSuggestionsCarouselDescription[];
+
 // Description for the flag to enable the material design feedback UI.
 extern const char kEnableMaterialDesignFeedbackDescription[];
 
@@ -2063,6 +2069,12 @@ extern const char kTouchscreenCalibrationName[];
 // Description of option to enable touch screen calibration settings in
 // chrome://md-settings/display.
 extern const char kTouchscreenCalibrationDescription[];
+
+// Name of option to enable Team Drives integration
+extern const char kTeamDrivesName[];
+
+// Description of option to enable Team Drives integration
+extern const char kTeamDrivesDescription[];
 
 #endif  // defined(OS_CHROMEOS)
 

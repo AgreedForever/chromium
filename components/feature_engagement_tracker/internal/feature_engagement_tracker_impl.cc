@@ -86,15 +86,17 @@ FeatureEngagementTrackerImpl::FeatureEngagementTrackerImpl(
     std::unique_ptr<ConditionValidator> condition_validator,
     std::unique_ptr<StorageValidator> storage_validator,
     std::unique_ptr<TimeProvider> time_provider)
-    : condition_validator_(std::move(condition_validator)),
+    : configuration_(std::move(configuration)),
+      condition_validator_(std::move(condition_validator)),
       time_provider_(std::move(time_provider)),
       initialization_finished_(false),
       weak_ptr_factory_(this) {
-  model_ = base::MakeUnique<ModelImpl>(
-      std::move(store), std::move(configuration), std::move(storage_validator));
+  model_ = base::MakeUnique<ModelImpl>(std::move(store),
+                                       std::move(storage_validator));
   model_->Initialize(
       base::Bind(&FeatureEngagementTrackerImpl::OnModelInitializationFinished,
-                 weak_ptr_factory_.GetWeakPtr()));
+                 weak_ptr_factory_.GetWeakPtr()),
+      time_provider_->GetCurrentDay());
 }
 
 FeatureEngagementTrackerImpl::~FeatureEngagementTrackerImpl() = default;
@@ -109,16 +111,18 @@ bool FeatureEngagementTrackerImpl::ShouldTriggerHelpUI(
   // TODO(nyquist): Track this event in UMA.
   bool result =
       condition_validator_
-          ->MeetsConditions(feature, *model_, time_provider_->GetCurrentDay())
+          ->MeetsConditions(feature, configuration_->GetFeatureConfig(feature),
+                            *model_, time_provider_->GetCurrentDay())
           .NoErrors();
   if (result)
-    model_->SetIsCurrentlyShowing(true);
+    condition_validator_->NotifyIsShowing(feature);
+
   return result;
 }
 
 void FeatureEngagementTrackerImpl::Dismissed(const base::Feature& feature) {
   // TODO(nyquist): Track this event in UMA.
-  model_->SetIsCurrentlyShowing(false);
+  condition_validator_->NotifyDismissed(feature);
 }
 
 bool FeatureEngagementTrackerImpl::IsInitialized() {

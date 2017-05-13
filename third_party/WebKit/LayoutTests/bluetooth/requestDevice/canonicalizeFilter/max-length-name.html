@@ -5,7 +5,7 @@
 <script>
 'use strict';
 promise_test(() => {
-  const DEVICE_NAME = 'a'.;
+  const DEVICE_NAME = 'a'.repeat(248);
 
   return setUpPreconnectedDevice({name: DEVICE_NAME})
     .then(() => requestDeviceWithKeyDown({ filters: [{name: DEVICE_NAME}]}))

@@ -775,7 +775,7 @@ double ConvertToBlinkTime(const base::TimeTicks& time_ticks) {
 NOINLINE void ExhaustMemory() {
   volatile void* ptr = nullptr;
   do {
-    ptr = malloc(0x1000000);
+    ptr = malloc(0x10000000);
     base::debug::Alias(&ptr);
   } while (ptr);
 }
@@ -4316,14 +4316,9 @@ void RenderFrameImpl::ShowContextMenu(const blink::WebContextMenuData& data) {
   if (params.src_url.spec().size() > url::kMaxURLChars)
     params.src_url = GURL();
 
-#if defined(OS_ANDROID)
-  gfx::Rect start_rect;
-  gfx::Rect end_rect;
-  GetRenderWidget()->GetSelectionBounds(&start_rect, &end_rect);
-  params.selection_start = gfx::Point(start_rect.x(), start_rect.bottom());
-  params.selection_end = gfx::Point(end_rect.right(), end_rect.bottom());
-#endif
-
+  blink::WebRect selection_in_window(data.selection_rect);
+  GetRenderWidget()->ConvertViewportToWindow(&selection_in_window);
+  params.selection_rect = selection_in_window;
   Send(new FrameHostMsg_ContextMenu(routing_id_, params));
 }
 

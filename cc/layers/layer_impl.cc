@@ -611,11 +611,6 @@ SkColor LayerImpl::SafeOpaqueBackgroundColor() const {
   return color;
 }
 
-bool LayerImpl::FilterIsAnimating() const {
-  return GetMutatorHost()->IsAnimatingFilterProperty(
-      element_id(), GetElementTypeForAnimation());
-}
-
 bool LayerImpl::HasPotentiallyRunningFilterAnimation() const {
   return GetMutatorHost()->HasPotentiallyRunningFilterAnimation(
       element_id(), GetElementTypeForAnimation());
@@ -670,11 +665,6 @@ void LayerImpl::SetMutableProperties(uint32_t properties) {
 
 void LayerImpl::SetPosition(const gfx::PointF& position) {
   position_ = position;
-}
-
-bool LayerImpl::TransformIsAnimating() const {
-  return GetMutatorHost()->IsAnimatingTransformProperty(
-      element_id(), GetElementTypeForAnimation());
 }
 
 bool LayerImpl::HasPotentiallyRunningTransformAnimation() const {

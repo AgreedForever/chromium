@@ -18,6 +18,7 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ptr_util.h"
+#include "base/message_loop/message_loop.h"
 #include "base/message_loop/timer_slack.h"
 #include "base/metrics/field_trial.h"
 #include "base/metrics/histogram_macros.h"
@@ -68,6 +69,7 @@
 #include "mojo/public/cpp/system/platform_handle.h"
 #include "services/device/public/cpp/power_monitor/power_monitor_broadcast_source.h"
 #include "services/resource_coordinator/public/cpp/memory/process_local_dump_manager_impl.h"
+#include "services/resource_coordinator/public/interfaces/memory/memory_instrumentation.mojom.h"
 #include "services/service_manager/public/cpp/connector.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
 #include "services/service_manager/runner/common/client_util.h"
@@ -420,7 +422,7 @@ void ChildThreadImpl::Init(const Options& options) {
   g_lazy_tls.Pointer()->Set(this);
   on_channel_error_called_ = false;
   message_loop_ = base::MessageLoop::current();
-#ifdef IPC_MESSAGE_LOG_ENABLED
+#if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
   // We must make sure to instantiate the IPC Logger *before* we create the
   // channel, otherwise we can get a callback on the IO thread which creates
   // the logger, and the logger does not like being created on the IO thread.
@@ -430,7 +432,7 @@ void ChildThreadImpl::Init(const Options& options) {
   channel_ =
       IPC::SyncChannel::Create(this, ChildProcess::current()->io_task_runner(),
                                ChildProcess::current()->GetShutDownEvent());
-#ifdef IPC_MESSAGE_LOG_ENABLED
+#if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
   if (!IsInBrowserProcess())
     IPC::Logging::GetInstance()->SetIPCSender(this);
 #endif
@@ -498,8 +500,21 @@ void ChildThreadImpl::Init(const Options& options) {
     channel_->AddFilter(new ChildMemoryMessageFilter());
 
     if (service_manager_connection_) {
+      std::string process_type_str =
+          base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+              switches::kProcessType);
+      auto process_type = memory_instrumentation::mojom::ProcessType::OTHER;
+      if (process_type_str == switches::kRendererProcess)
+        process_type = memory_instrumentation::mojom::ProcessType::RENDERER;
+      else if (process_type_str == switches::kGpuProcess)
+        process_type = memory_instrumentation::mojom::ProcessType::GPU;
+      else if (process_type_str == switches::kUtilityProcess)
+        process_type = memory_instrumentation::mojom::ProcessType::UTILITY;
+      else if (process_type_str == switches::kPpapiPluginProcess)
+        process_type = memory_instrumentation::mojom::ProcessType::PLUGIN;
+
       memory_instrumentation::ProcessLocalDumpManagerImpl::Config config(
-          GetConnector(), mojom::kBrowserServiceName);
+          GetConnector(), mojom::kBrowserServiceName, process_type);
       memory_instrumentation::ProcessLocalDumpManagerImpl::CreateInstance(
           config);
     }
@@ -565,7 +580,7 @@ void ChildThreadImpl::Init(const Options& options) {
 }
 
 ChildThreadImpl::~ChildThreadImpl() {
-#ifdef IPC_MESSAGE_LOG_ENABLED
+#if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
   IPC::Logging::GetInstance()->SetIPCSender(NULL);
 #endif
 
@@ -691,7 +706,7 @@ bool ChildThreadImpl::OnMessageReceived(const IPC::Message& msg) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ChildThreadImpl, msg)
     IPC_MESSAGE_HANDLER(ChildProcessMsg_Shutdown, OnShutdown)
-#if defined(IPC_MESSAGE_LOG_ENABLED)
+#if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
     IPC_MESSAGE_HANDLER(ChildProcessMsg_SetIPCLoggingEnabled,
                         OnSetIPCLoggingEnabled)
 #endif
@@ -758,7 +773,7 @@ void ChildThreadImpl::OnShutdown() {
   base::MessageLoop::current()->QuitWhenIdle();
 }
 
-#if defined(IPC_MESSAGE_LOG_ENABLED)
+#if BUILDFLAG(IPC_MESSAGE_LOG_ENABLED)
 void ChildThreadImpl::OnSetIPCLoggingEnabled(bool enable) {
   if (enable)
     IPC::Logging::GetInstance()->Enable();

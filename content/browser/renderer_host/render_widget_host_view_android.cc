@@ -680,7 +680,7 @@ gfx::Size RenderWidgetHostViewAndroid::GetPhysicalBackingSize() const {
                      default_bounds_.bottom() * scale_factor);
   }
 
-  return content_view_core_->GetPhysicalBackingSize();
+  return view_.GetPhysicalBackingSize();
 }
 
 bool RenderWidgetHostViewAndroid::DoBrowserControlsShrinkBlinkSize() const {
@@ -973,6 +973,13 @@ bool RenderWidgetHostViewAndroid::OnTouchHandleEvent(
          touch_selection_controller_->WillHandleTouchEvent(event);
 }
 
+int RenderWidgetHostViewAndroid::GetTouchHandleHeight() {
+  if (!touch_selection_controller_)
+    return 0;
+  return static_cast<int>(
+      touch_selection_controller_->GetStartHandleRect().height());
+}
+
 void RenderWidgetHostViewAndroid::ResetGestureDetection() {
   const ui::MotionEvent* current_down_event =
       gesture_provider_.GetCurrentDownEvent();
@@ -1148,6 +1155,14 @@ void RenderWidgetHostViewAndroid::ReclaimResources(
 
 void RenderWidgetHostViewAndroid::DidCreateNewRendererCompositorFrameSink(
     cc::mojom::MojoCompositorFrameSinkClient* renderer_compositor_frame_sink) {
+  if (!delegated_frame_host_) {
+    DCHECK(!using_browser_compositor_);
+    // We don't expect RendererCompositorFrameSink on Android WebView.
+    // (crbug.com/721102)
+    bad_message::ReceivedBadMessage(host_->GetProcess(),
+                                    bad_message::RWH_BAD_FRAME_SINK_REQUEST);
+    return;
+  }
   delegated_frame_host_->CompositorFrameSinkChanged();
   renderer_compositor_frame_sink_ = renderer_compositor_frame_sink;
   // Accumulated resources belong to the old RendererCompositorFrameSink and
@@ -1158,8 +1173,12 @@ void RenderWidgetHostViewAndroid::DidCreateNewRendererCompositorFrameSink(
 void RenderWidgetHostViewAndroid::SubmitCompositorFrame(
     const cc::LocalSurfaceId& local_surface_id,
     cc::CompositorFrame frame) {
+  if (!delegated_frame_host_) {
+    DCHECK(!using_browser_compositor_);
+    return;
+  }
+
   last_scroll_offset_ = frame.metadata.root_scroll_offset;
-  DCHECK(delegated_frame_host_);
   DCHECK(!frame.render_pass_list.empty());
 
   cc::RenderPass* root_pass = frame.render_pass_list.back().get();
@@ -1309,8 +1328,7 @@ void RenderWidgetHostViewAndroid::OnSelectionEvent(
     ResetGestureDetection();
   }
   selection_popup_controller_->OnSelectionEvent(
-      event, touch_selection_controller_->GetStartPosition(),
-      GetSelectionRect(*touch_selection_controller_));
+      event, GetSelectionRect(*touch_selection_controller_));
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>
@@ -1980,6 +1998,10 @@ void RenderWidgetHostViewAndroid::OnGestureEvent(
     web_gesture.SetModifiers(blink::WebInputEvent::kNoModifiers);
   }
   SendGestureEvent(web_gesture);
+}
+
+void RenderWidgetHostViewAndroid::OnPhysicalBackingSizeChanged() {
+  WasResized();
 }
 
 void RenderWidgetHostViewAndroid::OnContentViewCoreDestroyed() {

@@ -472,8 +472,6 @@ class CC_EXPORT Layer : public base::RefCounted<Layer> {
   void OnTransformAnimated(const gfx::Transform& transform);
   void OnScrollOffsetAnimated(const gfx::ScrollOffset& scroll_offset);
 
-  bool FilterIsAnimating() const;
-  bool TransformIsAnimating() const;
   bool ScrollOffsetAnimationWasInterrupted() const;
 
   void AddScrollChild(Layer* child);
@@ -503,6 +501,12 @@ class CC_EXPORT Layer : public base::RefCounted<Layer> {
   // This is set whenever a property changed on layer that affects whether this
   // layer should own a property tree node or not.
   void SetPropertyTreesNeedRebuild();
+
+  // Fast-path for |SetScrollOffset| and |SetScrollOffsetFromImplSide| to
+  // directly update scroll offset values in the property tree without needing a
+  // full property tree update. If property trees do not exist yet, ensures
+  // they are marked as needing to be rebuilt.
+  void UpdateScrollOffset(const gfx::ScrollOffset&);
 
   // Encapsulates all data, callbacks or interfaces received from the embedder.
   // TODO(khushalsagar): This is only valid when PropertyTrees are built

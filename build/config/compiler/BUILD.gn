@@ -120,8 +120,8 @@ if (gold_path == false) {
 }
 
 if (use_debug_fission == "default") {
-  use_debug_fission = is_debug && !is_win && use_gold &&
-                      linux_use_bundled_binutils && cc_wrapper == ""
+  use_debug_fission =
+      is_debug && !is_android && !is_win && use_gold && cc_wrapper == ""
 }
 
 # default_include_dirs ---------------------------------------------------------
@@ -169,6 +169,8 @@ config("compiler") {
     configs += [ "//build/config/mac:compiler" ]
   } else if (is_ios) {
     configs += [ "//build/config/ios:compiler" ]
+  } else if (is_fuchsia) {
+    configs += [ "//build/config/fuchsia:compiler" ]
   } else if (current_os == "aix") {
     configs += [ "//build/config/aix:compiler" ]
   }
@@ -309,7 +311,7 @@ config("compiler") {
 
   # Linux/Android common flags setup.
   # ---------------------------------
-  if (is_linux || is_android) {
+  if (is_linux || is_android || is_fuchsia) {
     if (use_pic) {
       cflags += [ "-fPIC" ]
       ldflags += [ "-fPIC" ]
@@ -401,7 +403,10 @@ config("compiler") {
     # merged.  See also https://crbug.com/663886
     # `linux_use_bundled_binutils` is to avoid breaking Linux distros which may
     # still have a buggy gold.
-    if (!is_android && linux_use_bundled_binutils) {
+    # The bug only affects x86 and x64, so we can still use ICF when targeting
+    # other architectures.
+    if ((!is_android && linux_use_bundled_binutils) ||
+        !(current_cpu == "x86" || current_cpu == "x64")) {
       ldflags += [ "-Wl,--icf=all" ]
     }
   }

@@ -125,7 +125,7 @@ TextPainterBase::Style TextPainterBase::TextPaintingStyle(
     DCHECK(document.Printing() == is_printing ||
            RuntimeEnabledFeatures::printBrowserEnabled());
     bool force_background_to_white =
-        BoxPainter::ShouldForceWhiteBackgroundForPrintEconomy(style, document);
+        BoxPainter::ShouldForceWhiteBackgroundForPrintEconomy(document, style);
     if (force_background_to_white) {
       text_style.fill_color =
           TextColorForWhiteBackground(text_style.fill_color);
@@ -175,7 +175,7 @@ void TextPainterBase::PaintDecorationsOnlyLineThrough(
   context.SetStrokeThickness(decoration_info.thickness);
   for (const AppliedTextDecoration& decoration : decorations) {
     TextDecoration lines = decoration.Lines();
-    if (lines & kTextDecorationLineThrough) {
+    if (EnumHasFlags(lines, TextDecoration::kLineThrough)) {
       const float line_through_offset = 2 * decoration_info.baseline / 3;
       AppliedDecorationPainter decoration_painter(
           context, decoration_info, line_through_offset, decoration,

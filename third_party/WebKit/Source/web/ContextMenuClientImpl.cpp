@@ -60,7 +60,6 @@
 #include "core/page/ContextMenuController.h"
 #include "core/page/Page.h"
 #include "platform/ContextMenu.h"
-#include "platform/FrameViewBase.h"
 #include "platform/exported/WrappedResourceResponse.h"
 #include "platform/text/TextBreakIterator.h"
 #include "platform/weborigin/KURL.h"
@@ -401,6 +400,19 @@ bool ContextMenuClientImpl::ShowContextMenu(const ContextMenu* default_menu,
   } else {
     data.input_field_type = WebContextMenuData::kInputFieldTypeNone;
   }
+
+  WebRect focus_webrect;
+  WebRect anchor_webrect;
+  web_view_->SelectionBounds(focus_webrect, anchor_webrect);
+
+  int left = std::min(focus_webrect.x, anchor_webrect.x);
+  int top = std::min(focus_webrect.y, anchor_webrect.y);
+  int right = std::max(focus_webrect.x + focus_webrect.width,
+                       anchor_webrect.x + anchor_webrect.width);
+  int bottom = std::max(focus_webrect.y + focus_webrect.height,
+                        anchor_webrect.y + anchor_webrect.height);
+
+  data.selection_rect = WebRect(left, top, right - left, bottom - top);
 
   if (from_touch && !ShouldShowContextMenuFromTouch(data))
     return false;

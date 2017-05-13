@@ -425,12 +425,21 @@ void ImageLoader::UpdateFromElement(UpdateFromElementBehavior update_behavior,
   if (!failed_load_url_.IsEmpty() && image_source_url == failed_load_url_)
     return;
 
+  if (loading_image_document_ && update_behavior == kUpdateForcedReload) {
+    // Prepares for reloading ImageDocument.
+    // We turn the ImageLoader into non-ImageDocument here, and proceed to
+    // reloading just like an ordinary <img> element below.
+    loading_image_document_ = false;
+    image_resource_for_image_document_ = nullptr;
+    ClearImage();
+  }
+
   // Prevent the creation of a ResourceLoader (and therefore a network request)
   // for ImageDocument loads. In this case, the image contents have already been
   // requested as a main resource and ImageDocumentParser will take care of
   // funneling the main resource bytes into image_, so just create an
   // ImageResource to be populated later.
-  if (loading_image_document_ && update_behavior != kUpdateForcedReload) {
+  if (loading_image_document_) {
     ImageResource* image_resource = ImageResource::Create(
         ResourceRequest(ImageSourceToKURL(element_->ImageSourceURL())));
     image_resource->SetStatus(ResourceStatus::kPending);
@@ -510,6 +519,16 @@ void ImageLoader::ImageNotifyFinished(ImageResourceContent* resource) {
   DCHECK(failed_load_url_.IsEmpty());
   DCHECK_EQ(resource, image_.Get());
 
+  // |has_pending_load_event_| is always false and |image_complete_| is
+  // always true for entire ImageDocument loading for historical reason.
+  // DoUpdateFromElement() is not called and SetImageForImageDocument()
+  // is called instead for ImageDocument loading.
+  // TODO(hiroshige): Turn the CHECK()s to DCHECK()s before going to beta.
+  if (loading_image_document_)
+    CHECK(image_complete_);
+  else
+    CHECK(!image_complete_);
+
   image_complete_ = true;
 
   // Update ImageAnimationPolicy for image_.
@@ -522,8 +541,12 @@ void ImageLoader::ImageNotifyFinished(ImageResourceContent* resource) {
     ToSVGImage(image_->GetImage())
         ->UpdateUseCounters(GetElement()->GetDocument());
 
-  if (!has_pending_load_event_)
+  if (loading_image_document_) {
+    CHECK(!has_pending_load_event_);
     return;
+  }
+
+  CHECK(has_pending_load_event_);
 
   if (resource->ErrorOccurred()) {
     LoadEventSender().CancelEvent(this);
@@ -623,10 +646,10 @@ void ImageLoader::DispatchPendingEvent(ImageEventSender* event_sender) {
 }
 
 void ImageLoader::DispatchPendingLoadEvent() {
-  if (!has_pending_load_event_)
-    return;
+  CHECK(has_pending_load_event_);
   if (!image_)
     return;
+  CHECK(image_complete_);
   has_pending_load_event_ = false;
   if (GetElement()->GetDocument().GetFrame())
     DispatchLoadEvent();
@@ -638,8 +661,7 @@ void ImageLoader::DispatchPendingLoadEvent() {
 }
 
 void ImageLoader::DispatchPendingErrorEvent() {
-  if (!has_pending_error_event_)
-    return;
+  CHECK(has_pending_error_event_);
   has_pending_error_event_ = false;
 
   if (GetElement()->GetDocument().GetFrame())

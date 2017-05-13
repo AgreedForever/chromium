@@ -11,7 +11,6 @@
 #include <ios>
 #include <iterator>
 #include <list>
-#include <memory>
 #include <new>
 #include <vector>
 
@@ -1591,66 +1590,6 @@ size_t SpdyFramer::ProcessIgnoredControlFramePayload(/*const char* data,*/
   return original_len - len;
 }
 
-bool SpdyFramer::ParseHeaderBlockInBuffer(const char* header_data,
-                                          size_t header_length,
-                                          SpdyHeaderBlock* block) const {
-  SpdyFrameReader reader(header_data, header_length);
-
-  // Read number of headers.
-  uint32_t num_headers;
-  if (!reader.ReadUInt32(&num_headers)) {
-    DVLOG(1) << "Unable to read number of headers.";
-    return false;
-  }
-
-  // Read each header.
-  for (uint32_t index = 0; index < num_headers; ++index) {
-    SpdyStringPiece temp;
-
-    // Read header name.
-    if (!reader.ReadStringPiece32(&temp)) {
-      DVLOG(1) << "Unable to read header name (" << index + 1 << " of "
-               << num_headers << ").";
-      return false;
-    }
-    const char* begin = temp.data();
-    const char* end = begin;
-    std::advance(end, temp.size());
-    if (std::any_of(begin, end, isupper)) {
-      DVLOG(1) << "Malformed header: Header name " << temp
-               << " contains upper-case characters.";
-      return false;
-    }
-    SpdyString name(temp);
-
-    // Read header value.
-    if (!reader.ReadStringPiece32(&temp)) {
-      DVLOG(1) << "Unable to read header value (" << index + 1 << " of "
-               << num_headers << ").";
-      return false;
-    }
-    SpdyString value(temp);
-
-    // Ensure no duplicates.
-    if (block->find(name) != block->end()) {
-      DVLOG(1) << "Duplicate header '" << name << "' (" << index + 1 << " of "
-               << num_headers << ").";
-      return false;
-    }
-
-    // Store header.
-    (*block)[name] = value;
-  }
-  if (reader.GetBytesConsumed() != header_length) {
-    SPDY_BUG << "Buffer expected to consist entirely of headers, but only "
-             << reader.GetBytesConsumed() << " bytes consumed, from "
-             << header_length;
-    return false;
-  }
-
-  return true;
-}
-
 SpdyFramer::SpdyFrameIterator::SpdyFrameIterator(SpdyFramer* framer)
     : framer_(framer),
       is_first_frame_(true),
@@ -1660,7 +1599,7 @@ SpdyFramer::SpdyFrameIterator::SpdyFrameIterator(SpdyFramer* framer)
 SpdyFramer::SpdyFrameIterator::~SpdyFrameIterator() {}
 
 size_t SpdyFramer::SpdyFrameIterator::NextFrame(ZeroCopyOutputBuffer* output) {
-  const SpdyFrameWithHeaderBlockIR* frame_ir = GetIR();
+  const SpdyFrameIR* frame_ir = GetIR();
   if (frame_ir == nullptr) {
     LOG(WARNING) << "frame_ir doesn't exist.";
     return false;
@@ -1682,12 +1621,14 @@ size_t SpdyFramer::SpdyFrameIterator::NextFrame(ZeroCopyOutputBuffer* output) {
     debug_total_size_ += size_without_block;
     debug_total_size_ += encoding->size();
     if (!has_next_frame_) {
+      auto* header_block_frame_ir =
+          static_cast<const SpdyFrameWithHeaderBlockIR*>(frame_ir);
       // TODO(birenroy) are these (here and below) still necessary?
       // HTTP2 uses HPACK for header compression. However, continue to
       // use GetSerializedLength() for an apples-to-apples comparision of
       // compression performance between HPACK and SPDY w/ deflate.
       size_t debug_payload_len =
-          framer_->GetSerializedLength(&frame_ir->header_block());
+          framer_->GetSerializedLength(&header_block_frame_ir->header_block());
       framer_->debug_visitor_->OnSendCompressedFrame(
           frame_ir->stream_id(), frame_ir->frame_type(), debug_payload_len,
           debug_total_size_);
@@ -1695,16 +1636,17 @@ size_t SpdyFramer::SpdyFrameIterator::NextFrame(ZeroCopyOutputBuffer* output) {
   }
 
   framer_->SetIsLastFrame(!has_next_frame_);
+  const size_t free_bytes_before = output->BytesFree();
+  bool ok = false;
   if (is_first_frame_) {
     is_first_frame_ = false;
-    size_t free_bytes_before = output->BytesFree();
-    bool ok = SerializeGivenEncoding(*encoding, output);
-    return ok ? free_bytes_before - output->BytesFree() : 0;
+    ok = SerializeGivenEncoding(*encoding, output);
   } else {
     SpdyContinuationIR continuation_ir(frame_ir->stream_id());
     continuation_ir.take_encoding(std::move(encoding));
-    return framer_->SerializeContinuation(continuation_ir, output);
+    ok = framer_->SerializeContinuation(continuation_ir, output);
   }
+  return ok ? free_bytes_before - output->BytesFree() : 0;
 }
 
 bool SpdyFramer::SpdyFrameIterator::HasNextFrame() const {
@@ -1721,8 +1663,7 @@ SpdyFramer::SpdyHeaderFrameIterator::SpdyHeaderFrameIterator(
 
 SpdyFramer::SpdyHeaderFrameIterator::~SpdyHeaderFrameIterator() {}
 
-const SpdyFrameWithHeaderBlockIR* SpdyFramer::SpdyHeaderFrameIterator::GetIR()
-    const {
+const SpdyFrameIR* SpdyFramer::SpdyHeaderFrameIterator::GetIR() const {
   return headers_ir_.get();
 }
 
@@ -1747,8 +1688,7 @@ SpdyFramer::SpdyPushPromiseFrameIterator::SpdyPushPromiseFrameIterator(
 
 SpdyFramer::SpdyPushPromiseFrameIterator::~SpdyPushPromiseFrameIterator() {}
 
-const SpdyFrameWithHeaderBlockIR*
-SpdyFramer::SpdyPushPromiseFrameIterator::GetIR() const {
+const SpdyFrameIR* SpdyFramer::SpdyPushPromiseFrameIterator::GetIR() const {
   return push_promise_ir_.get();
 }
 
@@ -1773,12 +1713,16 @@ SpdyFramer::SpdyControlFrameIterator::~SpdyControlFrameIterator() {}
 size_t SpdyFramer::SpdyControlFrameIterator::NextFrame(
     ZeroCopyOutputBuffer* output) {
   size_t size_written = framer_->SerializeFrame(*frame_ir_, output);
-  frame_ir_.reset();
+  has_next_frame_ = false;
   return size_written;
 }
 
 bool SpdyFramer::SpdyControlFrameIterator::HasNextFrame() const {
-  return frame_ir_ != nullptr;
+  return has_next_frame_;
+}
+
+const SpdyFrameIR* SpdyFramer::SpdyControlFrameIterator::GetIR() const {
+  return frame_ir_.get();
 }
 
 // TODO(yasong): remove all the static_casts.
@@ -1787,22 +1731,21 @@ std::unique_ptr<SpdyFrameSequence> SpdyFramer::CreateIterator(
     std::unique_ptr<const SpdyFrameIR> frame_ir) {
   std::unique_ptr<SpdyFrameSequence> result = nullptr;
   switch (frame_ir->frame_type()) {
-    case SpdyFrameType::DATA: {
-      DLOG(ERROR) << "Data should use a different path to write";
-      result = nullptr;
-      break;
-    }
     case SpdyFrameType::HEADERS: {
       result = SpdyMakeUnique<SpdyHeaderFrameIterator>(
-          framer,
-          SpdyWrapUnique(static_cast<const SpdyHeadersIR*>(frame_ir.get())));
+          framer, SpdyWrapUnique(
+                      static_cast<const SpdyHeadersIR*>(frame_ir.release())));
       break;
     }
     case SpdyFrameType::PUSH_PROMISE: {
       result = SpdyMakeUnique<SpdyPushPromiseFrameIterator>(
-          framer, SpdyWrapUnique(
-                      static_cast<const SpdyPushPromiseIR*>(frame_ir.get())));
+          framer, SpdyWrapUnique(static_cast<const SpdyPushPromiseIR*>(
+                      frame_ir.release())));
       break;
+    }
+    case SpdyFrameType::DATA: {
+      DVLOG(1) << "Serialize a stream end DATA frame for VTL";
+      // FALLTHROUGH_INTENDED
     }
     default: {
       result =

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "base/feature_list.h"
 #include "components/feature_engagement_tracker/internal/configuration.h"
 #include "components/feature_engagement_tracker/public/feature_list.h"
 
@@ -16,14 +17,15 @@ FeatureConfigStorageValidator::FeatureConfigStorageValidator() = default;
 
 FeatureConfigStorageValidator::~FeatureConfigStorageValidator() = default;
 
-bool FeatureConfigStorageValidator::ShouldStore(const std::string& event_name) {
+bool FeatureConfigStorageValidator::ShouldStore(
+    const std::string& event_name) const {
   return should_store_event_names_.find(event_name) !=
          should_store_event_names_.end();
 }
 
 bool FeatureConfigStorageValidator::ShouldKeep(const std::string& event_name,
                                                uint32_t event_day,
-                                               uint32_t current_day) {
+                                               uint32_t current_day) const {
   // Should not keep events that will happen in the future.
   if (event_day > current_day)
     return false;
@@ -45,8 +47,12 @@ bool FeatureConfigStorageValidator::ShouldKeep(const std::string& event_name,
 void FeatureConfigStorageValidator::InitializeFeatures(
     FeatureVector features,
     const Configuration& configuration) {
-  for (const auto* feature : features)
+  for (const auto* feature : features) {
+    if (!base::FeatureList::IsEnabled(*feature))
+      continue;
+
     InitializeFeatureConfig(configuration.GetFeatureConfig(*feature));
+  }
 }
 
 void FeatureConfigStorageValidator::ClearForTesting() {

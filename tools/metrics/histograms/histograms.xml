@@ -29627,6 +29627,16 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   </summary>
 </histogram>
 
+<histogram base="true" name="Memory.Experimental.Browser2" units="MB">
+<!-- Name completed by histogram_suffixes name="BrowserMemoryAllocator2" -->
+
+  <owner>erikchen@chromium.org</owner>
+  <summary>
+    The browser process's memory usage reported by the memory instrumentation
+    service.
+  </summary>
+</histogram>
+
 <histogram name="Memory.Experimental.CompressedPagesPerSecond" units="pages/s">
   <owner>bashi@chromium.org</owner>
   <summary>
@@ -29670,6 +29680,16 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   </summary>
 </histogram>
 
+<histogram base="true" name="Memory.Experimental.Gpu2" units="MB">
+<!-- Name completed by histogram_suffixes name="GpuMemoryAllocator2" -->
+
+  <owner>erikchen@chromium.org</owner>
+  <summary>
+    The gpu process's memory usage reported by the memory instrumentation
+    service.
+  </summary>
+</histogram>
+
 <histogram base="true" name="Memory.Experimental.Renderer" units="MB">
 <!-- Name completed by histogram_suffixes name="RendererMemoryAllocator" -->
 
@@ -29708,6 +29728,16 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <summary>
     The uptime of a render process in time ticks (excludes extensions). Emitted
     when the processes quits.
+  </summary>
+</histogram>
+
+<histogram base="true" name="Memory.Experimental.Renderer2" units="MB">
+<!-- Name completed by histogram_suffixes name="RendererMemoryAllocator2" -->
+
+  <owner>erikchen@chromium.org</owner>
+  <summary>
+    The renderer process's memory usage reported by the memory instrumentation
+    service.
   </summary>
 </histogram>
 
@@ -39249,7 +39279,7 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
 </histogram>
 
 <histogram name="Net.TCP_Connection_Latency_IPv4_No_Race" units="ms">
-  <owner>mmenke@chromium.org</owner>
+  <owner>mgersh@chromium.org</owner>
   <summary>
     Time from when the Connect() starts until it completes when the network
     address only contains IPv4 addresses.  Only times under 10 minutes are
@@ -39258,7 +39288,7 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
 </histogram>
 
 <histogram name="Net.TCP_Connection_Latency_IPv4_Wins_Race" units="ms">
-  <owner>mmenke@chromium.org</owner>
+  <owner>mgersh@chromium.org</owner>
   <summary>
     Time from when the Connect() starts until it completes when the IPv4
     fallback connection won the race against IPv6.  Only times under 10 minutes
@@ -39267,7 +39297,7 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
 </histogram>
 
 <histogram name="Net.TCP_Connection_Latency_IPv6_Raceable" units="ms">
-  <owner>mmenke@chromium.org</owner>
+  <owner>mgersh@chromium.org</owner>
   <summary>
     Time from when the Connect() starts until it completes when we race an IPv6
     connection against an IPv4 connection with a 300ms delay.  Only times under
@@ -39276,7 +39306,7 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
 </histogram>
 
 <histogram name="Net.TCP_Connection_Latency_IPv6_Solo" units="ms">
-  <owner>mmenke@chromium.org</owner>
+  <owner>mgersh@chromium.org</owner>
   <summary>
     Time from when the Connect() starts until it completes when the network
     address only contains IPv6 addresses.  Only times under 10 minutes are
@@ -80300,6 +80330,15 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   </summary>
 </histogram>
 
+<histogram name="WebCore.SpellChecker.RequestInterval" units="ms">
+  <owner>xiaochengh@chromium.org</owner>
+  <summary>
+    The amount of time between consecutive spellcheck requests made by Blink,
+    with the exception that requests made simultaneously checking different
+    parts of the same editing host count as only one request.
+  </summary>
+</histogram>
+
 <histogram name="WebCore.UseCounter_TEST.CSSProperties"
     enum="MappedCSSProperties">
   <obsolete>
@@ -84057,6 +84096,12 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <affected-histogram name="BlinkGC.CollectionRate"/>
 </histogram_suffixes>
 
+<histogram_suffixes name="BrowserMemoryAllocator2" separator=".">
+  <suffix name="Resident" label="Only counting resident memory."/>
+  <suffix name="Malloc" label="Constrained to malloc allocator."/>
+  <affected-histogram name="Memory.Experimental.Browser2"/>
+</histogram_suffixes>
+
 <histogram_suffixes name="CachedResourceType" separator=".">
   <suffix name="JavaScript"
       label="Showing cache patterns only for JavaScript resources."/>
@@ -86035,6 +86080,12 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
   <suffix name="Pressure" label="Sampled on CRITICAL memory pressure signal."/>
   <affected-histogram name="GPU.ContextMemory.GLES"/>
   <affected-histogram name="GPU.ContextMemory.WebGL"/>
+</histogram_suffixes>
+
+<histogram_suffixes name="GpuMemoryAllocator2" separator=".">
+  <suffix name="Resident" label="Only counting resident memory."/>
+  <suffix name="Malloc" label="Constrained to malloc allocator."/>
+  <affected-histogram name="Memory.Experimental.Gpu2"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="GWSChromeJointExperiment">
@@ -90763,6 +90814,15 @@ http://cs/file:chrome/histograms.xml - but prefer this file for new entries.
       label="Summed over the PartitionAlloc, malloc, discardable memory,
              mainThreadIsolate() and BlinkGC allocators"/>
   <affected-histogram name="Memory.Experimental.Renderer"/>
+</histogram_suffixes>
+
+<histogram_suffixes name="RendererMemoryAllocator2" separator=".">
+  <suffix name="Resident" label="Only counting resident memory."/>
+  <suffix name="Malloc" label="Constrained to malloc allocator."/>
+  <suffix name="PartitionAlloc" label="Constrained to partition allocator."/>
+  <suffix name="BlinkGC" label="Constrained to blink GC allocator."/>
+  <suffix name="V8" label="Constrained to v8 allocator."/>
+  <affected-histogram name="Memory.Experimental.Renderer2"/>
 </histogram_suffixes>
 
 <histogram_suffixes name="RendererMemoryTiming" separator=".">

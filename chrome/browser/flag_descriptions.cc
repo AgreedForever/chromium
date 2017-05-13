@@ -51,6 +51,13 @@ const char kEnableMaterialDesignFeedbackDescription[] =
     "If enabled, reporting an issue will load the Material Design feedback "
     "UI.";
 
+const char kContextualSuggestionsCarouselName[] =
+    "Enable Contextual Suggestions";
+
+const char kContextualSuggestionsCarouselDescription[] =
+    "If enabled, shows contextual suggestions in a horizontal carousel in "
+    "bottom sheet content.";
+
 //  Report URL to SafeSearch
 
 const char kSafeSearchUrlReportingName[] = "SafeSearch URLs reporting.";
@@ -1860,6 +1867,10 @@ const char kTouchscreenCalibrationName[] =
 const char kTouchscreenCalibrationDescription[] =
     "If enabled, the user can calibrate the touch screen displays in "
     "chrome://md-settings/display.";
+
+const char kTeamDrivesName[] = "Enable Team Drives Integration";
+const char kTeamDrivesDescription[] =
+    "If enabled, files under Team Drives will appear in the Files app.";
 
 #endif  // defined(OS_CHROMEOS)
 

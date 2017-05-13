@@ -134,7 +134,8 @@ NavigationURLLoaderNetworkService::NavigationURLLoaderNetworkService(
         BrowserThread::IO, FROM_HERE,
         base::Bind(
             &PrepareNavigationOnIOThread, base::Passed(std::move(new_request)),
-            resource_context, resource_type, appcache_handle->core(),
+            resource_context, resource_type,
+            appcache_handle ? appcache_handle->core() : nullptr,
             base::Bind(&NavigationURLLoaderNetworkService::StartURLRequest,
                        weak_factory_.GetWeakPtr())));
     return;
@@ -231,7 +232,7 @@ void NavigationURLLoaderNetworkService::StartURLRequest(
     binding_.Unbind();
 
   mojom::URLLoaderClientPtr url_loader_client_ptr_to_pass;
-  binding_.Bind(&url_loader_client_ptr_to_pass);
+  binding_.Bind(mojo::MakeRequest(&url_loader_client_ptr_to_pass));
 
   mojom::URLLoaderFactory* factory = nullptr;
   // This |factory_ptr| will be destroyed when it goes out of scope. Because
