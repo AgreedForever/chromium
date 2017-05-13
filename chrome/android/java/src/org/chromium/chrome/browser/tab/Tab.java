@@ -22,7 +22,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
@@ -88,7 +87,6 @@ import org.chromium.components.dom_distiller.core.DomDistillerUrlUtils;
 import org.chromium.components.navigation_interception.InterceptNavigationDelegate;
 import org.chromium.components.security_state.ConnectionSecurityLevel;
 import org.chromium.components.sync.SyncConstants;
-import org.chromium.content.browser.ChildProcessLauncher;
 import org.chromium.content.browser.ContentView;
 import org.chromium.content.browser.ContentViewCore;
 import org.chromium.content.browser.crypto.CipherFactory;
@@ -1695,9 +1693,13 @@ public class Tab
      */
     protected void showSadTab() {
         if (getContentViewCore() != null) {
-            OnClickListener suggestionAction = new OnClickListener() {
+            // If the tab has crashed twice in a row change the sad tab view to the "Send Feedback"
+            // version and change the onClickListener.
+            final boolean showSendFeedbackView = mSadTabSuccessiveRefreshCounter >= 1;
+
+            Runnable suggestionAction = new Runnable() {
                 @Override
-                public void onClick(View view) {
+                public void run() {
                     Activity activity = mWindowAndroid.getActivity().get();
                     assert activity != null;
                     HelpAndFeedback.getInstance(activity).show(activity,
@@ -1706,14 +1708,10 @@ public class Tab
                 }
             };
 
-            // If the tab has crashed twice in a row change the button to "Send Feedback" and
-            // change the onClickListener.
-            final boolean showSendFeedbackButton = mSadTabSuccessiveRefreshCounter >= 1;
-            OnClickListener buttonAction = new OnClickListener() {
-
+            Runnable buttonAction = new Runnable() {
                 @Override
-                public void onClick(View v) {
-                    if (showSendFeedbackButton) {
+                public void run() {
+                    if (showSendFeedbackView) {
                         getActivity().startHelpAndFeedback(Tab.this, "MobileSadTabFeedback");
                     } else {
                         reload();
@@ -1725,8 +1723,7 @@ public class Tab
             assert mSadTabView == null;
 
             mSadTabView = SadTabViewFactory.createSadTabView(mThemedApplicationContext,
-                    suggestionAction, buttonAction, showSendFeedbackButton
-                            ? R.string.sad_tab_send_feedback_label : R.string.sad_tab_reload_label);
+                    suggestionAction, buttonAction, showSendFeedbackView);
             mSadTabSuccessiveRefreshCounter++;
             // Show the sad tab inside ContentView.
             getContentViewCore().getContainerView().addView(
@@ -2298,14 +2295,6 @@ public class Tab
         }
         newContentViewCore.onShow();
         setContentViewCore(newContentViewCore);
-
-        // If the URL has already committed (e.g. prerendering), tell process management logic that
-        // it can rely on the process visibility signal for binding management.
-        // TODO: Call ChildProcessLauncher#determinedVisibility() at a more intuitive time.
-        // See crbug.com/537671
-        if (!mContentViewCore.getWebContents().getLastCommittedUrl().equals("")) {
-            ChildProcessLauncher.determinedVisibility(mContentViewCore.getCurrentRenderProcessId());
-        }
 
         destroyNativePageInternal(previousNativePage);
         for (TabObserver observer : mObservers) {

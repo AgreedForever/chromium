@@ -41,6 +41,8 @@ class SyncMessageFilter;
 
 namespace mojo {
 namespace edk {
+class IncomingBrokerClientInvitation;
+class OutgoingBrokerClientInvitation;
 class ScopedIPCSupport;
 }  // namespace edk
 }  // namespace mojo
@@ -210,7 +212,7 @@ class CONTENT_EXPORT ChildThreadImpl
 
   // We create the channel first without connecting it so we can add filters
   // prior to any messages being received, then connect it afterwards.
-  void ConnectChannel();
+  void ConnectChannel(mojo::edk::IncomingBrokerClientInvitation* invitation);
 
   // IPC message handlers.
   void OnShutdown();
@@ -297,6 +299,7 @@ struct ChildThreadImpl::Options {
   bool connect_to_browser;
   scoped_refptr<base::SingleThreadTaskRunner> browser_process_io_runner;
   std::vector<IPC::MessageFilter*> startup_filters;
+  mojo::edk::OutgoingBrokerClientInvitation* broker_client_invitation;
   std::string in_process_service_request_token;
 
  private:

@@ -6,6 +6,7 @@
 
 #include "base/strings/utf_string_conversions.h"
 #include "cc/paint/skia_paint_canvas.h"
+#include "components/security_state/core/security_state.h"
 #include "ui/gfx/canvas.h"
 #include "ui/gfx/font.h"
 #include "ui/gfx/font_list.h"
@@ -36,18 +37,36 @@ static constexpr float kSecurityIconHeight = 0.03;
 static constexpr float kUrlRightMargin = 0.02;
 static constexpr float kSeparatorWidth = 0.002;
 
+using security_state::SecurityLevel;
+
+const struct gfx::VectorIcon& getSecurityIcon(int level) {
+  switch (level) {
+    case SecurityLevel::NONE:
+    case SecurityLevel::HTTP_SHOW_WARNING:
+    case SecurityLevel::SECURITY_WARNING:
+      return ui::kInfoOutlineIcon;
+    case SecurityLevel::SECURE:
+    case SecurityLevel::EV_SECURE:
+      return ui::kLockIcon;
+    case SecurityLevel::SECURE_WITH_POLICY_INSTALLED_CERT:
+    case SecurityLevel::DANGEROUS:
+    default:
+      return ui::kWarningIcon;
+  }
+}
+
 }  // namespace
 
-UrlBarTexture::UrlBarTexture() = default;
+UrlBarTexture::UrlBarTexture() : security_level_(SecurityLevel::DANGEROUS) {}
 
 UrlBarTexture::~UrlBarTexture() = default;
 
-void UrlBarTexture::SetHover(bool hover) {
-  hover_ = hover;
-}
-
 void UrlBarTexture::SetURL(const GURL& gurl) {
   gurl_ = gurl;
+}
+
+void UrlBarTexture::SetSecurityLevel(int level) {
+  security_level_ = level;
 }
 
 float UrlBarTexture::ToPixels(float meters) const {
@@ -73,7 +92,8 @@ void UrlBarTexture::Draw(SkCanvas* canvas, const gfx::Size& texture_size) {
   SkVector left_corners[4] = {rounded_corner, {0, 0}, {0, 0}, rounded_corner};
   round_rect.setRectRadii({0, 0, kHeight, kHeight}, left_corners);
   SkPaint paint;
-  paint.setColor(hover_ ? kBackgroundHover : kBackground);
+  paint.setColor((GetDrawFlags() & FLAG_HOVER) ? kBackgroundHover
+                                               : kBackground);
   canvas->drawRRect(round_rect, paint);
 
   // URL area.
@@ -99,16 +119,19 @@ void UrlBarTexture::Draw(SkCanvas* canvas, const gfx::Size& texture_size) {
 
   // Site security state icon.
   // TODO(cjgrant): Plug in the correct icons based on security level.
-  canvas->save();
-  canvas->translate(
-      kBackButtonWidth + kSeparatorWidth + kSecurityFieldWidth / 2,
-      kHeight / 2);
-  canvas->translate(-kSecurityIconHeight / 2, -kSecurityIconHeight / 2);
-  icon_default_height = GetDefaultSizeOfVectorIcon(ui::kBackArrowIcon);
-  icon_scale = kSecurityIconHeight / icon_default_height;
-  canvas->scale(icon_scale, icon_scale);
-  PaintVectorIcon(&gfx_canvas, ui::kBackArrowIcon, kForeground);
-  canvas->restore();
+  if (!gurl_.spec().empty()) {
+    canvas->save();
+    canvas->translate(
+        kBackButtonWidth + kSeparatorWidth + kSecurityFieldWidth / 2,
+        kHeight / 2);
+    canvas->translate(-kSecurityIconHeight / 2, -kSecurityIconHeight / 2);
+    const gfx::VectorIcon& security_icon = getSecurityIcon(security_level_);
+    icon_default_height = GetDefaultSizeOfVectorIcon(security_icon);
+    icon_scale = kSecurityIconHeight / icon_default_height;
+    canvas->scale(icon_scale, icon_scale);
+    PaintVectorIcon(&gfx_canvas, security_icon, kForeground);
+    canvas->restore();
+  }
 
   canvas->restore();
 

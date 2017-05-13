@@ -15,22 +15,51 @@ UrlBar::UrlBar(int preferred_width)
 
 UrlBar::~UrlBar() = default;
 
-void UrlBar::OnHoverEnter() {
-  texture_->SetHover(true);
-  Update();
-}
-
-void UrlBar::OnHoverLeave() {
-  texture_->SetHover(false);
-  Update();
-}
-
 UiTexture* UrlBar::GetTexture() const {
   return texture_.get();
 }
 
+void UrlBar::OnHoverEnter(gfx::PointF position) {
+  if (!texture_->SetDrawFlags(UrlBarTexture::FLAG_HOVER))
+    return;
+  Update();
+}
+
+void UrlBar::OnHoverLeave() {
+  if (!texture_->SetDrawFlags(0))
+    return;
+  Update();
+}
+
+void UrlBar::OnButtonUp(gfx::PointF position) {
+  back_button_callback_.Run();
+}
+
+void UrlBar::SetEnabled(bool enabled) {
+  if (enabled && !enabled_) {
+    Update();
+  }
+  enabled_ = enabled;
+}
+
 void UrlBar::SetURL(const GURL& gurl) {
+  // TODO(cjgrant): See if we get duplicate security level numbers, despite the
+  // source of this information being called "on changed". Also, consider
+  // delaying the texture update slighly, such that back-to-back URL and
+  // security state changes generate a single texture update instead of two.
   texture_->SetURL(gurl);
+  if (enabled_)
+    Update();
+}
+
+void UrlBar::SetSecurityLevel(int level) {
+  texture_->SetSecurityLevel(level);
+  if (enabled_)
+    Update();
+}
+
+void UrlBar::SetBackButtonCallback(const base::Callback<void()>& callback) {
+  back_button_callback_ = callback;
 }
 
 }  // namespace vr_shell

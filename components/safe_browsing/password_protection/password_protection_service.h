@@ -33,7 +33,7 @@ namespace safe_browsing {
 class SafeBrowsingDatabaseManager;
 class PasswordProtectionRequest;
 
-extern const base::Feature kLowReputationPinging;
+extern const base::Feature kPasswordFieldOnFocusPinging;
 extern const base::Feature kProtectedPasswordEntryPinging;
 
 // Manage password protection pings and verdicts. There is one instance of this
@@ -70,6 +70,9 @@ class PasswordProtectionService : public history::HistoryServiceObserver {
   void CacheVerdict(const GURL& url,
                     LoginReputationClientResponse* verdict,
                     const base::Time& receive_time);
+
+  // Removes all the expired verdicts from cache.
+  void CleanUpExpiredVerdicts();
 
   // Creates an instance of PasswordProtectionRequest and call Start() on that
   // instance. This function also insert this request object in |requests_| for
@@ -150,7 +153,9 @@ class PasswordProtectionService : public history::HistoryServiceObserver {
   FRIEND_TEST_ALL_PREFIXES(PasswordProtectionServiceTest,
                            TestPathVariantsMatchCacheExpression);
   FRIEND_TEST_ALL_PREFIXES(PasswordProtectionServiceTest,
-                           TestCleanUpCachedVerdicts);
+                           TestRemoveCachedVerdictOnURLsDeleted);
+  FRIEND_TEST_ALL_PREFIXES(PasswordProtectionServiceTest,
+                           TestCleanUpExpiredVerdict);
 
   // Overridden from history::HistoryServiceObserver.
   void OnURLsDeleted(history::HistoryService* history_service,

@@ -2783,7 +2783,7 @@ void FrameView::ScrollbarStyleChanged() {
 
 bool FrameView::ScheduleAnimation() {
   if (PlatformChromeClient* client = GetChromeClient()) {
-    client->ScheduleAnimation(frame_);
+    client->ScheduleAnimation(this);
     return true;
   }
   return false;
@@ -3744,10 +3744,12 @@ void FrameView::SetTracksPaintInvalidations(bool track_paint_invalidations) {
                               ? new Vector<ObjectPaintInvalidation>
                               : nullptr);
       if (RuntimeEnabledFeatures::slimmingPaintV2Enabled()) {
+        if (!paint_controller_)
+          paint_controller_ = PaintController::Create();
         paint_controller_->SetTracksRasterInvalidations(
             track_paint_invalidations);
-        paint_artifact_compositor_->SetTracksRasterInvalidations(
-            track_paint_invalidations);
+        if (paint_artifact_compositor_)
+          paint_artifact_compositor_->ResetTrackedRasterInvalidations();
       } else {
         layout_view.Compositor()->SetTracksRasterInvalidations(
             track_paint_invalidations);

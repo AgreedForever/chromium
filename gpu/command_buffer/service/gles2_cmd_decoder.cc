@@ -3787,6 +3787,7 @@ Capabilities GLES2DecoderImpl::GetCapabilities() {
   bool is_offscreen = !!offscreen_target_frame_buffer_.get();
   caps.flips_vertically = !is_offscreen && surface_->FlipsVertically();
   caps.msaa_is_slow = workarounds().msaa_is_slow;
+  caps.avoid_stencil_buffers = workarounds().avoid_stencil_buffers;
   caps.dc_layers = supports_dc_layers_;
 
   caps.blend_equation_advanced =
@@ -16053,6 +16054,9 @@ error::Error GLES2DecoderImpl::HandleInsertFenceSyncCHROMIUM(
   const uint64_t release_count = c.release_count();
   if (!fence_sync_release_callback_.is_null())
     fence_sync_release_callback_.Run(release_count);
+  // Exit inner command processing loop so that we check the scheduling state
+  // and yield if necessary as we may have unblocked a higher priority context.
+  ExitCommandProcessingEarly();
   return error::kNoError;
 }
 

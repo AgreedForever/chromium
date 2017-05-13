@@ -177,10 +177,11 @@ bool SystemDisplayFunction::PreRunValidation(std::string* error) {
 
 bool SystemDisplayFunction::ShouldRestrictToKioskAndWebUI() {
   // Allow autotest extension to access for Chrome OS testing.
-  if (extension()->permissions_data()->HasAPIPermission(
+  if (extension() && extension()->permissions_data()->HasAPIPermission(
       APIPermission::kAutoTestPrivate)) {
     return false;
   }
+
   return true;
 }
 

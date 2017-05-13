@@ -112,6 +112,7 @@ class VrShell : public device::PresentingGvrDelegate,
                     jboolean incognito,
                     jint id);
   void OnContentPaused(bool paused);
+  void NavigateBack();
   base::android::ScopedJavaGlobalRef<jobject> TakeContentSurface(
       JNIEnv* env,
       const base::android::JavaParamRef<jobject>& obj);
@@ -147,6 +148,8 @@ class VrShell : public device::PresentingGvrDelegate,
   void ContentFrameWasResized(bool width_changed);
 
   void ForceExitVr();
+  void ExitPresent();
+  void ExitFullscreen();
 
   void ProcessContentGesture(std::unique_ptr<blink::WebInputEvent> event);
   void SubmitControllerModel(std::unique_ptr<VrControllerModel> model);

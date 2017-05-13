@@ -225,6 +225,11 @@ void VrShell::OnContentPaused(bool paused) {
     delegate_provider_->device_provider()->Device()->OnFocus();
 }
 
+void VrShell::NavigateBack() {
+  JNIEnv* env = base::android::AttachCurrentThread();
+  Java_VrShellImpl_navigateBack(env, j_vr_shell_.obj());
+}
+
 void VrShell::OnTriggerEvent(JNIEnv* env, const JavaParamRef<jobject>& obj) {
   gl_thread_->task_runner()->PostTask(
       FROM_HERE,
@@ -420,16 +425,6 @@ void VrShell::DoUiAction(const UiAction action,
                          const base::DictionaryValue* arguments) {
   // Actions that can be handled natively.
   switch (action) {
-    case HISTORY_BACK:
-      if (web_contents_ && web_contents_->IsFullscreen()) {
-        web_contents_->ExitFullscreen(false);
-        return;
-      }
-      // Otherwise handle in java.
-      break;
-    case EXIT_PRESENT:
-      delegate_provider_->ExitWebVRPresent();
-      return;
     default:
       break;
   }
@@ -448,9 +443,6 @@ void VrShell::DoUiAction(const UiAction action,
       Java_VrShellImpl_openNewTab(env, j_vr_shell_.obj(), incognito);
       return;
     }
-    case HISTORY_BACK:
-      Java_VrShellImpl_navigateBack(env, j_vr_shell_.obj());
-      break;
     case HISTORY_FORWARD:
       Java_VrShellImpl_navigateForward(env, j_vr_shell_.obj());
       break;
@@ -490,6 +482,16 @@ void VrShell::ContentWasShown() {
 void VrShell::ForceExitVr() {
   JNIEnv* env = base::android::AttachCurrentThread();
   Java_VrShellImpl_forceExitVr(env, j_vr_shell_.obj());
+}
+
+void VrShell::ExitPresent() {
+  delegate_provider_->ExitWebVRPresent();
+}
+
+void VrShell::ExitFullscreen() {
+  if (web_contents_ && web_contents_->IsFullscreen()) {
+    web_contents_->ExitFullscreen(false);
+  }
 }
 
 void VrShell::OnVRVsyncProviderRequest(
