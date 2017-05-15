@@ -13,7 +13,7 @@ promise_test(() => {
       new DOMException(
         'Failed to execute \'requestDevice\' on \'Bluetooth\': ' +
         'A device name can\'t be longer than 248 bytes.',
-    'TypeError'));
+      'TypeError'));
 }, 'Unicode string with utf8 representation longer than 248 bytes in ' +
    '\'name\' must throw TypeError.');
 </script>
